@@ -1,38 +1,40 @@
 # Project Notes
-最后更新：2026-05-07 21:04:03 +08:00
 
-## 完成后禁止停手（全局硬约束）
+> 本文件为中文镜像，与源文件同构；技术 token 与路径引用保持一致。
+Last updated: 2026-05-07 21:04:03 +08:00
 
-> 2026-06-03 新增：源于 `products/ielts-vocab` 上的真实失败案例——Agent 完成 13 次 `git-commit-batch` 提交循环后，列出四个 "下一步" 选项（m1 / m2 / m3 / m4），在用户已经接受 A 合并计划的情况下仍然停下来等待用户挑选，违反契约。用户明确要求停止这种行为。本节覆盖工作区其他位置及 OMX 模板中所有更温和的措辞，与上文的 "User-Confirmation Lockdown" 同级强制。
+## No-Stop After Completion (global hard constraint)
 
-### 不变量（绝对）
+> Added 2026-06-03 after a real failure on `products/ielts-vocab`: the agent completed a 13-commit `git-commit-batch` cycle, then listed four "next step" options (m1 / m2 / m3 / m4) and waited for the user to pick one before doing anything, even though the user had already accepted the A merge plan earlier in the same task. The user explicitly told the agent to stop doing that. This block overrides any softer phrasing elsewhere in this workspace or in OMX templates, and it is enforced at the same level as "User-Confirmation Lockdown" above.
 
-- 已完成的步骤 **不是** 交接点。Agent 在得到可验证结果后，MUST 继续执行显然的下一项安全动作并在结尾汇报，除非下一项动作落在下文显式列出的"高风险集合"内。
-- 在显然的下一步已经明确的情况下，**禁止**在任务末尾罗列多选项（"选 m1/m2/m3/m4"、"你要 X 还是 Y?"、"我该做 A 还是 B?"）。选定默认值、执行、汇报。
-- "等待用户确认" 对普通的可逆本地工作而言 **永远不是** 合法的终态。只有当动作命中下文"高风险集合"时才允许等待。
-- Agent 掌握下一动作的节奏。Owner 决定范围，而非节奏。
+### Invariants (absolute)
 
-### 高风险集合（ONLY 唯一允许停下来的场景）
+- A completed step is **not** a hand-off moment. After a verified result, the agent MUST continue with the obvious next safe action and report at the end, unless the next action is in the explicit high-risk set below.
+- Listing multiple-choice next steps at the end of a task ("choose m1/m2/m3/m4", "do you want X or Y?", "should I do A or B?") when the next safe action is already obvious is **forbidden**. Pick the default, do it, report.
+- "Wait for the user to confirm" is **never** a valid terminal state for ordinary reversible local work. It is only valid for the explicit high-risk set in the next section.
+- The agent owns the choreography of the next step. The user owns scope, not pacing.
 
-仅当动作命中以下类别之一时才允许停下来询问，且问题必须指明具体风险：
+### High-risk set (the ONLY cases where stopping is allowed)
 
-- 破坏性 / 不可逆动作（`rm -rf`、force-push、删除数据库、清空状态、删掉唯一副本）。
-- 凭据相关动作（部署密钥、发布令牌、生产密钥、SSH 私钥）。
-- 外部生产动作（真实用户、付费服务、发布包、基础设施 apply）。
-- 超出用户当前任务陈述范围的实质性范围变更。
-- 权限缺失（无法读取文件、无法连接服务、无法运行工具、仓库拒绝访问）。
+Stopping to ask is allowed only for actions that match one of these categories, and the question must name the specific risk:
 
-其余一切——git commit / branch / push、文件编辑、安装、构建、测试、lint、typecheck、重启本地服务、运行脚本、生成报告、发送通知、编写文档、更新记忆、清理产物——Agent MUST 直接执行并汇报。
+- Destructive / irreversible actions (`rm -rf`, force-push, dropping a DB, wiping state, deleting the only copy).
+- Credential-gated actions (deploy keys, publish tokens, prod secrets, SSH private keys).
+- External production actions (real users, paid services, package publish, infra apply).
+- Material scope change beyond what the user stated in the current task.
+- Missing authority (cannot read a file, cannot reach a service, cannot run a tool, repo permission denied).
 
-### "继续" 在实践中的体现
+For everything else — git commit / branch / push, file edit, install, build, test, lint, typecheck, restart a local service, run a script, generate a report, send a notification, write a doc, update memory, clean up artifacts — the agent MUST proceed and report.
 
-- 一批提交完成并验证后：选择显然的下一项本地动作（例如切到集成分支、跑一次快速验证、写汇总文档、任务说 push 就 push）并执行。**不要**列选项。
-- 一次 build / test / lint 通过后：汇报结果，然后继续任务的下一步。**不要**问 "还有其他事吗？"
-- 通知发出后：记录日志，不要等待。
-- 长命令执行完后：读取输出、决策、行动。
-- 遇到真阻塞时：点明阻塞、最小的默认计划、唯一能解除阻塞的不可逆动作——但不要凭空添加额外的检查点。
+### What "continue" looks like in practice
 
-### 反模式（不得出现在 Agent 输出中）
+- After a batch of commits lands and is verified: pick the next obvious local action (e.g. switch to the integration branch, run a fast verification, write the summary doc, push if the task said push) and execute it. Do **not** list options.
+- After a build/test/lint pass: report the result, then move to the next step in the same task. Do **not** ask "anything else?".
+- After a notification is sent: log it, do not wait.
+- After a long-running command finishes: read the output, decide, act.
+- If a true blocker is hit, name the blocker, the minimal default plan, and the single irreversible action that would resolve it — but do not invent extra checkpoints.
+
+### Anti-patterns (must not appear in agent output)
 
 - "Next steps: m1 ... m2 ... m3 ... which do you want?"
 - "Let me know if you'd like me to ..."
@@ -40,232 +42,232 @@
 - "Should I continue with ..."
 - "Just confirm and I'll proceed."
 - "If you want, I can ..."
-- 在已经交付了清晰、可逆的结果后，把节奏决定权甩回给用户的结尾段落。
-- 在成功步骤后写 "Stopping here" / "I'll wait" / "Ready when you are"。
+- A final paragraph whose only purpose is to hand the pacing decision back to the user after a clear, reversible result has already been delivered.
+- "Stopping here" / "I'll wait" / "Ready when you are" after a successful step.
 
-### 发送任务最终消息前的自检
+### Self-check before sending the final message of any task
 
-在发出任务最后一条消息前，先问自己：
+Before sending the last message of a task, ask:
 
-1. "我是不是刚在一个已完成步骤后罗列了多选项？"如果是，删掉列表，改成我下一步要做的动作。
-2. "下一步是否在上文高风险集合内？"如果不在，现在就执行下一步，并在同一条消息内汇报。
-3. "如果我正要发问，问题是用户独有信息缺失，还是我在要求他们重做已经决定的事？"如果是后者，删掉问题。
-4. "在同一条回合内，是否还有安全、可逆的下一步可以做？"如果有，先做完再发。
+1. "Did I just list multiple-choice options at the end of a completed step?" If yes, delete the list and replace it with the next action I am about to take.
+2. "Is the next action in the high-risk set above?" If no, do the next action now and report at the end of the same message.
+3. "If I am about to ask a question, is the user missing information only they have, or am I asking them to re-decide something they already decided?" If the latter, delete the question.
+4. "Is there a safe, reversible next step I can do in the same turn?" If yes, do it before sending.
 
-一条正确的最终消息读起来是"汇报 + 下一动作"，绝不是"汇报 + 菜单"。
+A correct final message reads as a report + next action, never as a report + menu.
 
 
-## 仓库概览
-- IELTS 词汇学习 monorepo，包含 Web 端、React Native 移动端、共享 TypeScript 客户端核心，以及 Flask / 拆分服务的后端形态。
-- 主要 scope：`frontend/` 承载 Web 包；`apps/mobile/` 承载 React Native Android/iOS；`packages/app-core/` 承载跨端契约与纯逻辑；`backend/` 承载接口与持久化；`services/` 加 `apps/gateway-bff/` 承载拆分后的运行时服务；`vocabulary_data/` 承载词书资产；`docs/` 承载可持久化的计划、审计与 runbook。
-- 未来的客户端请放在 `apps/*`：待开工的微信小程序用 `apps/miniprogram/`；仅当 iOS 不再共用 React Native app 时才新增 `apps/ios/`。
-- 运行时把拆分后端视为本地规范路径：预览 UI 在 `3002`，浏览器 API 入口在 `8000`，下游服务在 `8101-8108`，语音 Socket.IO 在 `5001`。
+## Repo Summary
+- IELTS vocabulary learning monorepo with Web, React Native mobile, shared TypeScript client core, and Flask / split-service backend surfaces.
+- Main scopes: `frontend/` for the Web package; `apps/mobile/` for React Native Android/iOS; `packages/app-core/` for cross-client contracts and pure logic; `backend/` for APIs and persistence; `services/` plus `apps/gateway-bff/` for split runtime services; `vocabulary_data/` for book assets; and `docs/` for durable plans, audits, and runbooks.
+- Keep future clients in `apps/*`: use `apps/miniprogram/` for a WeChat mini-program when that work starts, and only add `apps/ios/` if iOS stops sharing the React Native app.
+- Runtime now treats split backend as the canonical local path: preview UI on `3002`, browser API ingress on `8000`, downstream services on `8101-8108`, and speech Socket.IO on `5001`.
 
-## 工作约定
-- 仓库文本文件均按 UTF-8 处理，除非文件本身另有声明。
-- 使用 `apply_patch` 之前，先读取精确的目标行，并以稳定的 ASCII 或代码结构为锚点。
-- 当文件出现编码损坏时，重写整个逻辑块，而不是堆叠小补丁去打 mojibake。
-- 跟踪的手编辑文本文件保持 `<= 500` 行，除非被已 check-in 的超长基线覆盖。
-- 把 `vocabulary_data/**` 与 `pnpm-lock.yaml` 视为生成产物，免于 `500` 行上限。
-- 提交前保持 `pnpm check:file-lines` 与 `pnpm lint` 绿灯；`pnpm build` 与 `pnpm test` 现在会自动跑 guardrail 套件。
-- 在移动端或共享客户端提交前保持 `pnpm verify:clients` 绿灯。
-- Android 移动端工作时，不要让用户去启动模拟器。直接启动或复用本地 AVD `ielts_vocab_api35`，在 `8081` 启动 Metro，执行 `adb reverse tcp:8081 tcp:8081`，安装或启动 debug APK，并用前台 Activity、`logcat` 和模拟器截图来验证。仅在模拟器 / SDK 损坏或场景需要真机时才指出该缺口。
-- 后端或文本密集改动后，保持 `pytest backend/tests/test_source_text_integrity.py -q` 绿灯。
-- 把远程云端链路视为域 / 运行时问题的标准答案：`axiomaticworld.com -> nginx(:443/:80) -> active HTTP slot gateway-bff(:18000|:28000) -> downstream services(:18101-18108|:28101-28108)`，`/socket.io` 代理到 `:5001` 的 ASR Socket.IO。
-- 本地拆分运行时仅用于复现：预览 UI 在 `3002`，浏览器 API 入口在 `8000`，下游服务在 `8101-8108`，语音 Socket.IO 在 `5001`。
-- 改动运行时启动流程时，让 `start-project.sh`、`start-microservices.sh`、`start-monolith-compat.sh` 与 `frontend/vite.config.ts`、`nginx.conf.example` 以及真实服务端口保持一致。
+## Working Agreements
+- Treat repo text files as UTF-8 unless the file itself proves otherwise.
+- Before using `apply_patch`, read exact target lines and anchor on stable ASCII or code structure.
+- If a file shows encoding corruption, rewrite the whole logical block instead of stacking small mojibake patches.
+- Keep tracked hand-edited text files at `<= 500` lines unless they are covered by the checked-in oversize baseline.
+- Treat `vocabulary_data/**` and `pnpm-lock.yaml` as generated artifacts that are exempt from the `500`-line cap.
+- Keep `pnpm check:file-lines` and `pnpm lint` green before submit; `pnpm build` and `pnpm test` now run the guardrail bundle automatically.
+- Keep `pnpm verify:clients` green before mobile or shared-client submits.
+- For Android mobile work, do not ask the user to start the simulator. Start or reuse the local AVD `ielts_vocab_api35`, start Metro on `8081`, run `adb reverse tcp:8081 tcp:8081`, install or launch the debug APK, and verify with foreground activity, `logcat`, and emulator screenshots. Only call out a gap when the emulator/SDK is broken or the scenario needs true-device coverage.
+- Keep `pytest backend/tests/test_source_text_integrity.py -q` green after backend or text-heavy edits.
+- Treat the remote cloud chain as canonical for domain/runtime bugs: `axiomaticworld.com -> nginx(:443/:80) -> active HTTP slot gateway-bff(:18000|:28000) -> downstream services(:18101-18108|:28101-28108)`, with `/socket.io` proxied to ASR Socket.IO on `:5001`.
+- Use the local split runtime only for reproduction: preview UI on `3002`, browser API ingress on `8000`, downstream services on `8101-8108`, and speech Socket.IO on `5001`.
+- When touching runtime startup, keep `start-project.sh`, `start-microservices.sh`, and `start-monolith-compat.sh` aligned with `frontend/vite.config.ts`, `nginx.conf.example`, and the real service ports.
 
-## 当前焦点
-- 保持 Wave 后微服务基线稳定：正常拆分启动不再暴露共享 `SQLite` 覆盖开关，服务启动的环境变量加载由文件驱动，tts/asr 迁移基线已登记，gateway / internal 鉴权更严，OSS 制品校验为绿，`scripts/repo_summary.py` 已恢复。
-- 语音服务拆分后，保持生产形态本地启动和代理行为稳定。
-- 让 Ebbinghaus 到期复习、错词恢复与基础练习模式（`smart`、`listening`、`meaning`、`dictation`、`follow`、`quickmemory`、`errors`）与统计、学习者画像、复习队列计数直接对齐。
-- 把五维游戏与 AI 口语评测视作独立的进阶模式族，不要把基础 Ebbinghaus 或错词恢复路由进 `/game`。
-- 继续打磨学习中心与首页视觉，且不破坏桌面 / 移动端布局。
-- 切流后剩余的工作以运维为主：代码侧 `admin / notes / ai` 边界清理已就位、正常拆分运行时的表审计已清，剩下未完成的是最终的远程 release / 部署 / 预检 / 冒烟 / 存储演练收尾。
+## Current Focus
+- Keep the post-Wave microservice baseline stable: normal split startup no longer exposes shared-`SQLite` override flags, service boot env loading is file-driven, tts/asr migration baselines are registered, gateway/internal auth is stricter, OSS artifact validation is green, and `scripts/repo_summary.py` is restored.
+- Keep production-style local startup and proxy behavior stable after the speech-service split.
+- Keep Ebbinghaus due-review, wrong-word recovery, and foundational practice modes (`smart`, `listening`, `meaning`, `dictation`, `follow`, `quickmemory`, `errors`) directly aligned with stats, learner profile, and review queue counts.
+- Keep five-dimension game and AI speaking assessment as an independent advanced mode family. Do not route foundational Ebbinghaus or wrong-word recovery into `/game`.
+- Continue study-center and homepage visual polish without regressing desktop/mobile layout.
+- Remaining post-cutover work is now primarily operational: code-side `admin / notes / ai` boundary cleanup is in place, the table audit is clean for normal split runtime, and the main unfinished item is the final remote release/deploy/preflight/smoke/storage-drill closeout.
 
-## 同步最新备注
-- Wave 收尾又前进了一步：[identity_transport.py](/Volumes/code/workspace/products/ielts-vocab/packages/platform-sdk/platform_sdk/identity_transport.py) 与 [identity_admin_application.py](/Volumes/code/workspace/products/ielts-vocab/packages/platform-sdk/platform_sdk/identity_admin_application.py) 现在为 `admin-ops-service` 暴露一条内部 `set-admin` 契约，[identity_admin_internal_client.py](/Volumes/code/workspace/products/ielts-vocab/packages/platform-sdk/platform_sdk/identity_admin_internal_client.py)、[admin_user_management_application.py](/Volumes/code/workspace/products/ielts-vocab/packages/platform-sdk/platform_sdk/admin_user_management_application.py) 与 [admin_user_management_service.py](/Volumes/code/workspace/products/ielts-vocab/backend/services/admin_user_management_service.py) 现在都通过该契约路由 admin 开关，兼容模式才走 legacy fallback，[admin_projection_repository_support.py](/Volumes/code/workspace/products/ielts-vocab/backend/services/admin_projection_repository_support.py) 现在把缺失的 admin projection 标记视作严格边界、不再静默落到共享行，[ai_context_application.py](/Volumes/code/workspace/products/ielts-vocab/packages/platform-sdk/platform_sdk/ai_context_application.py) 现在在严格 AI 运行时下返回空的 learner-profile 快照、不再做本地共享表回退，[service_table_plan.py](/Volumes/code/workspace/products/ielts-vocab/packages/platform-sdk/platform_sdk/service_table_plan.py) 现在把 `admin-ops-service`、`notes-service`、`ai-execution-service` 报告为 `transitional_tables: []`，用于正常拆分运行时审计。
-- 收尾 Wave 5：[notes_summary_context_repository.py](/Volumes/code/workspace/products/ielts-vocab/backend/services/notes_summary_context_repository.py) 现在在严格 `notes-service` 运行时下阻断共享学习会话 / 错词回退，只在显式 legacy 模式下保留回退，[notes_summary_jobs_application.py](/Volumes/code/workspace/products/ielts-vocab/packages/platform-sdk/platform_sdk/notes_summary_jobs_application.py) 与 [notes_summary_job_service.py](/Volumes/code/workspace/products/ielts-vocab/backend/services/notes_summary_job_service.py) 现在在同步 / 异步摘要生成上呈现同样的 `503 strict-internal-contract` 边界，[search_cache_repository.py](/Volumes/code/workspace/products/ielts-vocab/backend/services/search_cache_repository.py) 现在把通用网络搜索的缓存键优先存到 Redis，数据库仅作回退，关闭了 Wave 5 缓存键的最后一个口子。
-- 继续 Wave 5 Redis 化语音状态：[realtime_session_state_runtime.py](/Volumes/code/workspace/products/ielts-vocab/packages/platform-sdk/platform_sdk/asr_runtime/realtime_session_state_runtime.py) 现在把带 transcript 感知的会话快照持久化到 Redis，并对 `partial_transcript` / `final_transcript` 摘要设长度上限，[realtime_sessions.py](/Volumes/code/workspace/products/ielts-vocab/packages/platform-sdk/platform_sdk/asr_runtime/realtime_sessions.py) 与 [realtime_socketio.py](/Volumes/code/workspace/products/ielts-vocab/packages/platform-sdk/platform_sdk/asr_runtime/realtime_socketio.py) 在所有 realtime ASR 事件中保持这些 transcript 字段同步更新，[socketio_service.py](/Volumes/code/workspace/products/ielts-vocab/packages/platform-sdk/platform_sdk/asr_runtime/socketio_service.py) 现在把 `/internal/sessions/<session_id>` 暴露给运维读取实时会话快照。
-- 继续 Wave 5 共享读退役，落在 `admin` HTTP 面上：[admin_user_detail_repository.py](/Volumes/code/workspace/products/ielts-vocab/backend/services/admin_user_detail_repository.py) 现在在严格拆分运行时下，当 `learning-core-service` 内部读取失败时，不再静默读共享 `UserBookProgress` / `UserChapterProgress` / `UserFavoriteWord` / `UserLearningEvent`，而是抛出服务边界错误，[admin_overview_service.py](/Volumes/code/workspace/products/ielts-vocab/backend/services/admin_overview_service.py)、[admin_user_management_service.py](/Volumes/code/workspace/products/ielts-vocab/backend/services/admin_user_management_service.py)、[admin_overview_application.py](/Volumes/code/workspace/products/ielts-vocab/packages/platform-sdk/platform_sdk/admin_overview_application.py) 与 [admin_user_management_application.py](/Volumes/code/workspace/products/ielts-vocab/packages/platform-sdk/platform_sdk/admin_user_management_application.py) 现在在 `/api/admin/users` 与 `/api/admin/users/<id>` 上把这个情况显式呈现为 `503 strict-internal-contract` 响应。
-- 新增受控的 Wave 5 projection 切流套件：[wave5_projection_cutover.py](/Volumes/code/workspace/products/ielts-vocab/packages/platform-sdk/platform_sdk/wave5_projection_cutover.py) 现在统一跑 `admin / notes / ai` bootstrap 流程并核对 marker 就绪度以及源 / 投影行数对账，[run-wave5-projection-cutover.py](/Volumes/code/workspace/products/ielts-vocab/scripts/run-wave5-projection-cutover.py) 把它暴露为运维命令，本地一次跑通得到 `admin users=2 study_sessions=578 wrong_words=1644`、`notes study_sessions=578 wrong_words=1644`、`ai wrong_words=1644 daily_summaries=0`。
-- 继续 Wave 5 共享读退役，落在 `notes-service` fallback 路径上：[learning_core_notes_context_application.py](/Volumes/code/workspace/products/ielts-vocab/packages/platform-sdk/platform_sdk/learning_core_notes_context_application.py) 与 [learning_core_transport.py](/Volumes/code/workspace/products/ielts-vocab/packages/platform-sdk/platform_sdk/learning_core_transport.py) 现在暴露 `/internal/learning/notes-context/study-sessions` 与 `/internal/learning/notes-context/wrong-words`，[learning_core_notes_context_internal_client.py](/Volumes/code/workspace/products/ielts-vocab/packages/platform-sdk/platform_sdk/learning_core_notes_context_internal_client.py) 现在为 `notes-service` 提供这些路由的类型化快照，[notes_summary_context_repository.py](/Volumes/code/workspace/products/ielts-vocab/backend/services/notes_summary_context_repository.py) 在严格拆分运行时下优先 `projection -> internal`，仅在显式 legacy fallback 开启时才退回到共享行。
-- 继续 Wave 5 projection 切流硬化，落在 `notes` 与 `ai` 的读侧：[notes_projection_bootstrap.py](/Volumes/code/workspace/products/ielts-vocab/packages/platform-sdk/platform_sdk/notes_projection_bootstrap.py) 与 [ai_projection_bootstrap.py](/Volumes/code/workspace/products/ielts-vocab/packages/platform-sdk/platform_sdk/ai_projection_bootstrap.py) 现在会回填 notes 的 study-session / wrong-word 和 AI 的 wrong-word / daily-summary 投影，并写入 service 拥有的 cursor 与 bootstrap marker 行，[bootstrap-notes-projections.py](/Volumes/code/workspace/products/ielts-vocab/scripts/bootstrap-notes-projections.py) 与 [bootstrap-ai-projections.py](/Volumes/code/workspace/products/ielts-vocab/scripts/bootstrap-ai-projections.py) 暴露这些流程作为运维脚本，[notes_summary_context_repository.py](/Volumes/code/workspace/products/ielts-vocab/backend/services/notes_summary_context_repository.py)、[ai_wrong_word_projection_support.py](/Volumes/code/workspace/products/ielts-vocab/packages/platform-sdk/platform_sdk/ai_wrong_word_projection_support.py) 与 [ai_daily_summary_projection_support.py](/Volumes/code/workspace/products/ielts-vocab/packages/platform-sdk/platform_sdk/ai_daily_summary_projection_support.py) 现在改由显式 bootstrap marker 切换，不再依赖行数对账。
-- 硬化 AI 内部调用 fallback，抵御本地端口干扰：[learning_core_internal_client.py](/Volumes/code/workspace/products/ielts-vocab/packages/platform-sdk/platform_sdk/learning_core_internal_client.py) 与 [catalog_content_internal_client.py](/Volumes/code/workspace/products/ielts-vocab/packages/platform-sdk/platform_sdk/catalog_content_internal_client.py) 现在在边界层 `401/403/404/5xx` 响应上抛错，让 `run_with_legacy_cross_service_fallback` 在本地运行时与测试期间依然能落到本地兼容路径。
-- 继续 Wave 5 `admin detail` 共享读退役，落在个性化侧：[learning_core_admin_detail_application.py](/Volumes/code/workspace/products/ielts-vocab/packages/platform-sdk/platform_sdk/learning_core_admin_detail_application.py) 与 [learning_core_transport.py](/Volumes/code/workspace/products/ielts-vocab/packages/platform-sdk/platform_sdk/learning_core_transport.py) 现在暴露 `/internal/learning/admin/favorite-words`，[learning_core_admin_detail_internal_client.py](/Volumes/code/workspace/products/ielts-vocab/packages/platform-sdk/platform_sdk/learning_core_admin_detail_internal_client.py) 现在拥有 admin-detail 的 learning-core 客户端快照，[admin_user_detail_repository.py](/Volumes/code/workspace/products/ielts-vocab/backend/services/admin_user_detail_repository.py) 与 admin user-management application / service 现在优先走内部读取收藏词，仅在 `learning-core-service` 不可用时才走共享行回退。
-- 把旧的超长 admin-detail 客户端 / 测试文件拆回 `500` 行护栏之内：[learning_core_internal_client.py](/Volumes/code/workspace/products/ielts-vocab/packages/platform-sdk/platform_sdk/learning_core_internal_client.py) 现在只保留通用 learning-core 客户端面，admin-detail 快照迁到 [learning_core_admin_detail_internal_client.py](/Volumes/code/workspace/products/ielts-vocab/packages/platform-sdk/platform_sdk/learning_core_admin_detail_internal_client.py)，learning-core admin-detail 的内部路由覆盖迁到 [test_internal_service_auth_admin_favorites.py](/Volumes/code/workspace/products/ielts-vocab/backend/tests/test_internal_service_auth_admin_favorites.py)，`pnpm check:file-lines` 重新转绿且没有新增基线豁免。
-- 继续 Wave 5 `admin detail` 共享读退役，落在学习侧：[learning_core_admin_detail_application.py](/Volumes/code/workspace/products/ielts-vocab/packages/platform-sdk/platform_sdk/learning_core_admin_detail_application.py)、[learning_core_transport.py](/Volumes/code/workspace/products/ielts-vocab/packages/platform-sdk/platform_sdk/learning_core_transport.py) 与 [learning_core_internal_client.py](/Volumes/code/workspace/products/ielts-vocab/packages/platform-sdk/platform_sdk/learning_core_internal_client.py) 现在暴露 / 使用 book progress、chapter progress、session word-sample events 的窄内部读端点，[admin_user_detail_repository.py](/Volumes/code/workspace/products/ielts-vocab/backend/services/admin_user_detail_repository.py) 现在优先用这些内部读，仅在 `learning-core-service` 不可用时回退到本地共享读。
-- 继续 Wave 5 `admin` 共享读退役，落在用户目录侧：[admin_user_directory_repository.py](/Volumes/code/workspace/products/ielts-vocab/backend/services/admin_user_directory_repository.py) 现在一旦存在 bootstrap marker，就从 `AdminProjectedUser` 服务目录读，owner 写入仍走共享 `User`，[auth_repository.py](/Volumes/code/workspace/products/ielts-vocab/backend/services/auth_repository.py) 与 `set-admin` 在写入时刷新投影用户快照，[test_wave5_identity_admin_event_flow.py](/Volumes/code/workspace/products/ielts-vocab/backend/tests/test_wave5_identity_admin_event_flow.py) 锁住"projection 优先"目录读以及 profile / admin 更新时刷新 projection 的行为。
-- 收紧 Wave 5 `admin` projection 切流契约：[admin_projection_repository_support.py](/Volumes/code/workspace/products/ielts-vocab/backend/services/admin_projection_repository_support.py) 现在按显式 bootstrap marker cursor 切换 user / session / wrong-word 读模型，不再用 projection 行数与共享表对账，相关 Wave 5 测试也锁住 marker 驱动的行为。
-- 新增安全的 Wave 5 admin projection bootstrap 路径：[admin_projection_bootstrap.py](/Volumes/code/workspace/products/ielts-vocab/packages/platform-sdk/platform_sdk/admin_projection_bootstrap.py) 现在从当前共享表回填 `AdminProjectedUser`、`AdminProjectedStudySession`、`AdminProjectedWrongWord` 并写入相关 `AdminProjectionCursor` 行，[bootstrap-admin-projections.py](/Volumes/code/workspace/products/ielts-vocab/scripts/bootstrap-admin-projections.py) 把该流程暴露为运维脚本，[test_admin_projection_bootstrap.py](/Volumes/code/workspace/products/ielts-vocab/backend/tests/test_admin_projection_bootstrap.py) 锁住回填与幂等刷新契约。
-- 新增第一块 Redis 化 ASR 临时状态：[realtime_session_state_runtime.py](/Volumes/code/workspace/products/ielts-vocab/packages/platform-sdk/platform_sdk/asr_runtime/realtime_session_state_runtime.py) 现在把 realtime 会话元数据镜像到 Redis，提供 TTL 快照与活跃会话计数，[realtime_socketio.py](/Volumes/code/workspace/products/ielts-vocab/packages/platform-sdk/platform_sdk/asr_runtime/realtime_socketio.py) 与 [realtime_sessions.py](/Volumes/code/workspace/products/ielts-vocab/packages/platform-sdk/platform_sdk/asr_runtime/realtime_sessions.py) 在会话生命周期切换时同步该状态，[test_asr_realtime_session_state_runtime.py](/Volumes/code/workspace/products/ielts-vocab/backend/tests/test_asr_realtime_session_state_runtime.py) 锁住 Redis 快照契约。
-- 上线第一份真正 Redis 化的 Wave 5 工作负载：[identity_rate_limit_runtime.py](/Volumes/code/workspace/products/ielts-vocab/packages/platform-sdk/platform_sdk/identity_rate_limit_runtime.py) 现在用 `Redis-first` 计数器驱动 auth / email 限流，数据库作回退，[auth_repository.py](/Volumes/code/workspace/products/ielts-vocab/backend/services/auth_repository.py) 现在让 login、bind-email code、forgot-password 检查都走这条路径，[test_auth_rate_limiting.py](/Volumes/code/workspace/products/ielts-vocab/backend/tests/test_auth_rate_limiting.py) 锁住 Redis 与 DB 回退两种行为。
-- 把 Wave 5 worker-aware 部署契约纳入常规发布路径：[run-service.sh](/Volumes/code/workspace/products/ielts-vocab/scripts/cloud-deploy/run-service.sh)、[release-common.sh](/Volumes/code/workspace/products/ielts-vocab/scripts/cloud-deploy/release-common.sh)、[smoke-check.sh](/Volumes/code/workspace/products/ielts-vocab/scripts/cloud-deploy/smoke-check.sh) 不再等未来的 rollout 步骤，剩余的 Wave 5 收尾工作是更广的共享读退役与 Redis 化工作负载落地。
-- 在 [deploy-release.sh](/Volumes/code/workspace/products/ielts-vocab/scripts/cloud-deploy/deploy-release.sh) 与 [run-service-schema-migrations.py](/Volumes/code/workspace/products/ielts-vocab/scripts/run-service-schema-migrations.py) 中加入部署时的拆分服务 schema 迁移支持，然后把迁移 runner 与 app 密钥解耦，使部署 bootstrap 能在加载 service-specific 密钥材料前先跑。
-- 通过收紧 [AuthContext.tsx](/Volumes/code/workspace/products/ielts-vocab/frontend/src/contexts/AuthContext.tsx) 与 [index.ts](/Volumes/code/workspace/products/ielts-vocab/frontend/src/lib/index.ts) 中的共享存储 helper，在部署重启间保留前端 auth 会话；回归覆盖在 [AuthContext.test.tsx](/Volumes/code/workspace/products/ielts-vocab/frontend/src/contexts/AuthContext.test.tsx) 与 [index.test.ts](/Volumes/code/workspace/products/ielts-vocab/frontend/src/lib/index.test.ts)。
-- 新增 Wave 5 远程 worker 部署契约：[run-service.sh](/Volumes/code/workspace/products/ielts-vocab/scripts/cloud-deploy/run-service.sh) 现在把所有 outbox / projection worker 都路由到 `ielts-service@<worker>`，[release-common.sh](/Volumes/code/workspace/products/ielts-vocab/scripts/cloud-deploy/release-common.sh) 现在仅在目标 release 支持 worker 时才启用 worker，回滚到旧 release 时禁用 worker，[smoke-check.sh](/Volumes/code/workspace/products/ielts-vocab/scripts/cloud-deploy/smoke-check.sh) 现在在当前 release 支持 worker 时检查 worker 的 systemd 活动。
-- 在 `119.29.182.134` 上执行 Wave 5 远程 broker 上线：`/etc/ielts-vocab/microservices.env` 现已包含 Redis / RabbitMQ 基线，`redis` 与 `rabbitmq-server` 已安装并处于 active，新的 broker 校验、preflight 与 smoke 链路都在部署主机上远程通过。
-- 修复 [provision-broker-runtime.sh](/Volumes/code/workspace/products/ielts-vocab/scripts/cloud-deploy/provision-broker-runtime.sh) 的首次安装 bug：脚本现在在要求 `redis-cli`、`rabbitmqctl`、`rabbitmq-diagnostics` 之前安装 broker 包，使干净远程主机可以成功 bootstrap。
-- 新增 Wave 5 远程 broker 上线基线：[provision-postgres.sh](/Volumes/code/workspace/products/ielts-vocab/scripts/cloud-deploy/provision-postgres.sh) 现在把规范的 `REDIS_*` 与 `RABBITMQ_*` 写入 `/etc/ielts-vocab/microservices.env`，[install-cloud-runtime.sh](/Volumes/code/workspace/products/ielts-vocab/scripts/cloud-deploy/install-cloud-runtime.sh) 现在安装并启用 `redis` 与 `rabbitmq-server`，[provision-broker-runtime.sh](/Volumes/code/workspace/products/ielts-vocab/scripts/cloud-deploy/provision-broker-runtime.sh) 现在搭建远程本地主机的 broker 基线，[validate-broker-runtime.sh](/Volumes/code/workspace/products/ielts-vocab/scripts/cloud-deploy/validate-broker-runtime.sh) 接入远程校验。
-- 收紧 Wave 5 broker 校验，让缺失的 broker env 不再被代码默认掩盖：[validate_wave5_broker_runtime.py](/Volumes/code/workspace/products/ielts-vocab/scripts/validate_wave5_broker_runtime.py) 现在要求显式的 broker 设置，[backend/.env.microservices.local](/Volumes/code/workspace/products/ielts-vocab/backend/.env.microservices.local) 现承载本地 Redis / RabbitMQ 基线，远程 [preflight-check.sh](/Volumes/code/workspace/products/ielts-vocab/scripts/cloud-deploy/preflight-check.sh) 与 [smoke-check.sh](/Volumes/code/workspace/products/ielts-vocab/scripts/cloud-deploy/smoke-check.sh) 在进入 HTTP smoke 路径前先校验 broker env、systemd unit 与运行时连通性。
-- 收尾代码侧 Wave 4 存储 / 制品对账工具：共享 `SQLite` scoped-override 重启记录、远程存储演练与回滚证据流、以及 `notes export`、`example-audio`、`word-audio` 的 `OSS` 校验 / 修复 operator 全部已纳入远程 runbook。
-- 新增 Wave 5 `notes-service <- learning.wrong_word.updated` consumer 路径：`notes_projected_wrong_words` 现在从事件物化错词事实，`start-microservices.sh` 启动分组的 `notes-domain-worker`，`notes_summary_context_repository` 在 per-user 状态追平后优先使用该 projection。
-- 新增 Wave 5 `ai-execution-service <- notes.summary.generated` consumer 路径：`ai_projected_daily_summaries` 现在从事件物化 notes 摘要事实，`start-microservices.sh` 启动分组的 `ai-execution-domain-worker`，`/internal/notes/summaries` 可供 service-auth 读取，AI context 在 `notes-service` 不可用时回退到投影摘要。
-- 新增 Wave 5 `ai-execution-service <- learning.wrong_word.updated` consumer 路径：`ai_projected_wrong_words` 现在从事件物化错词事实，`start-microservices.sh` 启动分组的 `ai-execution-domain-worker`，AI 错词读与 `get_wrong_words` 工具在 `learning-core-service` 不可用时回退到该 projection。
-- 新增 Wave 5 `notes-service <- ai.prompt_run.completed` consumer 路径：`notes_projected_prompt_runs` 现在从事件物化 AI prompt-run 事实，notes 摘要生成把该 projection 读到一个新的 `当天 AI 使用痕迹` 区段，`start-microservices.sh` 启动分组的 `notes-domain-worker`。
-- 新增 Wave 5 `notes-service <- learning.session.logged` consumer 路径：`notes_projected_study_sessions` 现在从事件物化学习会话上下文，`notes_summary_context_repository` 在追平后优先使用该 projection，`start-microservices.sh` 启动分组的 `notes-domain-worker`。
-- 新增 Wave 5 `tts.media.generated` 与 `ai.prompt_run.completed` 端到端本地事件流，含 service 拥有的物化表、真实 outbox publisher worker 与 admin projection worker，并在 admin overview 中暴露近期的 prompt-run 与 TTS-media 指标。
-- `start-microservices.sh` 现在启动规范分组后的 worker 集合：`core-eventing-worker`、`notes-domain-worker`、`ai-execution-domain-worker`、`admin-ops-domain-worker`。
-- 把语音处理从主 Flask app 拆出到 `backend/speech_service.py`，端口 `5001`，并相应更新代理 / 启动流程。
-- 在拉取 learning-stats 之前先做 quick-memory 对账，让较新的本地记录先到达后端，再做 dashboard 读。
-- 修复 `learning-stats` 与 `learner-profile` 中漏算刚到期词的到期复习时区偏移问题。
+## Latest Sync Notes
+- Post-Wave closeout advanced again: [identity_transport.py](/Volumes/code/workspace/products/ielts-vocab/packages/platform-sdk/platform_sdk/identity_transport.py) plus [identity_admin_application.py](/Volumes/code/workspace/products/ielts-vocab/packages/platform-sdk/platform_sdk/identity_admin_application.py) now expose an internal `set-admin` contract for `admin-ops-service`, [identity_admin_internal_client.py](/Volumes/code/workspace/products/ielts-vocab/packages/platform-sdk/platform_sdk/identity_admin_internal_client.py), [admin_user_management_application.py](/Volumes/code/workspace/products/ielts-vocab/packages/platform-sdk/platform_sdk/admin_user_management_application.py), and [admin_user_management_service.py](/Volumes/code/workspace/products/ielts-vocab/backend/services/admin_user_management_service.py) now route admin toggles through that contract with legacy fallback only for compat mode, [admin_projection_repository_support.py](/Volumes/code/workspace/products/ielts-vocab/backend/services/admin_projection_repository_support.py) now treats missing admin projection markers as a strict boundary instead of silently dropping to shared rows, [ai_context_application.py](/Volumes/code/workspace/products/ielts-vocab/packages/platform-sdk/platform_sdk/ai_context_application.py) now returns an empty learner-profile snapshot in strict AI runtime instead of local shared-table fallback, and [service_table_plan.py](/Volumes/code/workspace/products/ielts-vocab/packages/platform-sdk/platform_sdk/service_table_plan.py) now reports `admin-ops-service`, `notes-service`, and `ai-execution-service` with `transitional_tables: []` for the normal split-runtime audit.
+- Closed Wave 5: [notes_summary_context_repository.py](/Volumes/code/workspace/products/ielts-vocab/backend/services/notes_summary_context_repository.py) now blocks shared study-session/wrong-word fallback under strict `notes-service` runtime and only keeps that fallback for explicit legacy mode, [notes_summary_jobs_application.py](/Volumes/code/workspace/products/ielts-vocab/packages/platform-sdk/platform_sdk/notes_summary_jobs_application.py) plus [notes_summary_job_service.py](/Volumes/code/workspace/products/ielts-vocab/backend/services/notes_summary_job_service.py) now surface the same `503 strict-internal-contract` boundary on sync/async summary generation, and [search_cache_repository.py](/Volumes/code/workspace/products/ielts-vocab/backend/services/search_cache_repository.py) now stores general-purpose web-search cache keys in Redis first with database fallback, which closes the last Wave 5 cache-key gap.
+- Continued Wave 5 Redis-backed speech state adoption: [realtime_session_state_runtime.py](/Volumes/code/workspace/products/ielts-vocab/packages/platform-sdk/platform_sdk/asr_runtime/realtime_session_state_runtime.py) now persists transcript-aware session snapshots into Redis with bounded `partial_transcript` / `final_transcript` excerpts, [realtime_sessions.py](/Volumes/code/workspace/products/ielts-vocab/packages/platform-sdk/platform_sdk/asr_runtime/realtime_sessions.py) and [realtime_socketio.py](/Volumes/code/workspace/products/ielts-vocab/packages/platform-sdk/platform_sdk/asr_runtime/realtime_socketio.py) now keep those transcript fields updated across realtime ASR events, and [socketio_service.py](/Volumes/code/workspace/products/ielts-vocab/packages/platform-sdk/platform_sdk/asr_runtime/socketio_service.py) now exposes `/internal/sessions/<session_id>` for operator reads of the live session snapshot.
+- Continued Wave 5 shared-read retirement on the `admin` HTTP surface: [admin_user_detail_repository.py](/Volumes/code/workspace/products/ielts-vocab/backend/services/admin_user_detail_repository.py) now raises a service-boundary error instead of silently reading shared `UserBookProgress` / `UserChapterProgress` / `UserFavoriteWord` / `UserLearningEvent` rows when `learning-core-service` internal reads fail under strict split runtime, and [admin_overview_service.py](/Volumes/code/workspace/products/ielts-vocab/backend/services/admin_overview_service.py), [admin_user_management_service.py](/Volumes/code/workspace/products/ielts-vocab/backend/services/admin_user_management_service.py), [admin_overview_application.py](/Volumes/code/workspace/products/ielts-vocab/packages/platform-sdk/platform_sdk/admin_overview_application.py), and [admin_user_management_application.py](/Volumes/code/workspace/products/ielts-vocab/packages/platform-sdk/platform_sdk/admin_user_management_application.py) now surface that as explicit `503 strict-internal-contract` responses on `/api/admin/users` and `/api/admin/users/<id>`.
+- Added a controlled Wave 5 projection cutover pack: [wave5_projection_cutover.py](/Volumes/code/workspace/products/ielts-vocab/packages/platform-sdk/platform_sdk/wave5_projection_cutover.py) now runs the `admin / notes / ai` bootstrap flows and verifies marker readiness plus source/projected count parity in one place, [run-wave5-projection-cutover.py](/Volumes/code/workspace/products/ielts-vocab/scripts/run-wave5-projection-cutover.py) exposes it as an operator command, and a local run now passes with `admin users=2 study_sessions=578 wrong_words=1644`, `notes study_sessions=578 wrong_words=1644`, and `ai wrong_words=1644 daily_summaries=0`.
+- Continued Wave 5 shared-read retirement on the `notes-service` fallback path: [learning_core_notes_context_application.py](/Volumes/code/workspace/products/ielts-vocab/packages/platform-sdk/platform_sdk/learning_core_notes_context_application.py) plus [learning_core_transport.py](/Volumes/code/workspace/products/ielts-vocab/packages/platform-sdk/platform_sdk/learning_core_transport.py) now expose `/internal/learning/notes-context/study-sessions` and `/internal/learning/notes-context/wrong-words`, [learning_core_notes_context_internal_client.py](/Volumes/code/workspace/products/ielts-vocab/packages/platform-sdk/platform_sdk/learning_core_notes_context_internal_client.py) now gives `notes-service` typed snapshots for those routes, and [notes_summary_context_repository.py](/Volumes/code/workspace/products/ielts-vocab/backend/services/notes_summary_context_repository.py) now prefers `projection -> internal` under strict split runtime and only drops to shared rows when explicit legacy fallback is enabled.
+- Continued Wave 5 projection cutover hardening on the `notes` and `ai` read side: [notes_projection_bootstrap.py](/Volumes/code/workspace/products/ielts-vocab/packages/platform-sdk/platform_sdk/notes_projection_bootstrap.py) plus [ai_projection_bootstrap.py](/Volumes/code/workspace/products/ielts-vocab/packages/platform-sdk/platform_sdk/ai_projection_bootstrap.py) now backfill notes study-session/wrong-word and AI wrong-word/daily-summary projections while stamping service-owned cursor and bootstrap-marker rows, [bootstrap-notes-projections.py](/Volumes/code/workspace/products/ielts-vocab/scripts/bootstrap-notes-projections.py) plus [bootstrap-ai-projections.py](/Volumes/code/workspace/products/ielts-vocab/scripts/bootstrap-ai-projections.py) expose those flows as operator scripts, and [notes_summary_context_repository.py](/Volumes/code/workspace/products/ielts-vocab/backend/services/notes_summary_context_repository.py), [ai_wrong_word_projection_support.py](/Volumes/code/workspace/products/ielts-vocab/packages/platform-sdk/platform_sdk/ai_wrong_word_projection_support.py), and [ai_daily_summary_projection_support.py](/Volumes/code/workspace/products/ielts-vocab/packages/platform-sdk/platform_sdk/ai_daily_summary_projection_support.py) now switch by explicit bootstrap markers instead of count parity.
+- Hardened AI internal-call fallback against live local port interference: [learning_core_internal_client.py](/Volumes/code/workspace/products/ielts-vocab/packages/platform-sdk/platform_sdk/learning_core_internal_client.py) and [catalog_content_internal_client.py](/Volumes/code/workspace/products/ielts-vocab/packages/platform-sdk/platform_sdk/catalog_content_internal_client.py) now raise on boundary-level `401/403/404/5xx` responses so `run_with_legacy_cross_service_fallback` can still drop to the local compatibility path during local runtime and test runs.
+- Continued Wave 5 `admin detail` shared-read retirement on the personalization side: [learning_core_admin_detail_application.py](/Volumes/code/workspace/products/ielts-vocab/packages/platform-sdk/platform_sdk/learning_core_admin_detail_application.py) and [learning_core_transport.py](/Volumes/code/workspace/products/ielts-vocab/packages/platform-sdk/platform_sdk/learning_core_transport.py) now expose `/internal/learning/admin/favorite-words`, [learning_core_admin_detail_internal_client.py](/Volumes/code/workspace/products/ielts-vocab/packages/platform-sdk/platform_sdk/learning_core_admin_detail_internal_client.py) now owns the admin-detail learning-core client snapshots, and [admin_user_detail_repository.py](/Volumes/code/workspace/products/ielts-vocab/backend/services/admin_user_detail_repository.py) plus the admin user-management application/service now read favorite words internal-first with shared-row fallback only when `learning-core-service` is unavailable.
+- Split the old oversize admin-detail client/test files back under the `500`-line guardrail: [learning_core_internal_client.py](/Volumes/code/workspace/products/ielts-vocab/packages/platform-sdk/platform_sdk/learning_core_internal_client.py) now keeps only the generic learning-core client surface, admin-detail snapshots moved to [learning_core_admin_detail_internal_client.py](/Volumes/code/workspace/products/ielts-vocab/packages/platform-sdk/platform_sdk/learning_core_admin_detail_internal_client.py), and the learning-core admin-detail internal-route coverage moved into [test_internal_service_auth_admin_favorites.py](/Volumes/code/workspace/products/ielts-vocab/backend/tests/test_internal_service_auth_admin_favorites.py), so `pnpm check:file-lines` is green again without adding new baseline exceptions.
+- Continued Wave 5 `admin detail` shared-read retirement on the learning side: [learning_core_admin_detail_application.py](/Volumes/code/workspace/products/ielts-vocab/packages/platform-sdk/platform_sdk/learning_core_admin_detail_application.py), [learning_core_transport.py](/Volumes/code/workspace/products/ielts-vocab/packages/platform-sdk/platform_sdk/learning_core_transport.py), and [learning_core_internal_client.py](/Volumes/code/workspace/products/ielts-vocab/packages/platform-sdk/platform_sdk/learning_core_internal_client.py) now expose/use narrow internal read endpoints for book progress, chapter progress, and session word-sample events, and [admin_user_detail_repository.py](/Volumes/code/workspace/products/ielts-vocab/backend/services/admin_user_detail_repository.py) now uses those internal reads first with local shared-read fallback when `learning-core-service` is unavailable.
+- Continued Wave 5 `admin` shared-read retirement on the user directory side: [admin_user_directory_repository.py](/Volumes/code/workspace/products/ielts-vocab/backend/services/admin_user_directory_repository.py) now serves directory reads from `AdminProjectedUser` once the bootstrap marker is present while still keeping owner writes on shared `User`, [auth_repository.py](/Volumes/code/workspace/products/ielts-vocab/backend/services/auth_repository.py) and `set-admin` now refresh the projected user snapshot on write, and [test_wave5_identity_admin_event_flow.py](/Volumes/code/workspace/products/ielts-vocab/backend/tests/test_wave5_identity_admin_event_flow.py) now locks projection-first directory reads plus projection refresh on profile/admin updates.
+- Tightened the Wave 5 `admin` projection cutover contract: [admin_projection_repository_support.py](/Volumes/code/workspace/products/ielts-vocab/backend/services/admin_projection_repository_support.py) now switches user/session/wrong-word read models by explicit bootstrap marker cursors instead of comparing projection row counts against shared tables, and the related Wave 5 tests now lock that marker-driven behavior.
+- Added a safe Wave 5 admin projection bootstrap path: [admin_projection_bootstrap.py](/Volumes/code/workspace/products/ielts-vocab/packages/platform-sdk/platform_sdk/admin_projection_bootstrap.py) now backfills `AdminProjectedUser`, `AdminProjectedStudySession`, and `AdminProjectedWrongWord` from current shared tables while stamping the related `AdminProjectionCursor` rows, [bootstrap-admin-projections.py](/Volumes/code/workspace/products/ielts-vocab/scripts/bootstrap-admin-projections.py) exposes that flow as an operator script, and [test_admin_projection_bootstrap.py](/Volumes/code/workspace/products/ielts-vocab/backend/tests/test_admin_projection_bootstrap.py) locks the backfill plus idempotent refresh contract.
+- Added the first Redis-backed ASR ephemeral-state slice: [realtime_session_state_runtime.py](/Volumes/code/workspace/products/ielts-vocab/packages/platform-sdk/platform_sdk/asr_runtime/realtime_session_state_runtime.py) now mirrors realtime session metadata into Redis with TTL-backed snapshots and active-session counting, [realtime_socketio.py](/Volumes/code/workspace/products/ielts-vocab/packages/platform-sdk/platform_sdk/asr_runtime/realtime_socketio.py) and [realtime_sessions.py](/Volumes/code/workspace/products/ielts-vocab/packages/platform-sdk/platform_sdk/asr_runtime/realtime_sessions.py) now sync that state across session lifecycle transitions, and [test_asr_realtime_session_state_runtime.py](/Volumes/code/workspace/products/ielts-vocab/backend/tests/test_asr_realtime_session_state_runtime.py) locks the Redis snapshot contract.
+- Landed the first real Redis-backed Wave 5 workload: [identity_rate_limit_runtime.py](/Volumes/code/workspace/products/ielts-vocab/packages/platform-sdk/platform_sdk/identity_rate_limit_runtime.py) now drives auth/email throttling through `Redis-first` counters with database fallback, [auth_repository.py](/Volumes/code/workspace/products/ielts-vocab/backend/services/auth_repository.py) now routes login, bind-email code, and forgot-password checks through that path, and [test_auth_rate_limiting.py](/Volumes/code/workspace/products/ielts-vocab/backend/tests/test_auth_rate_limiting.py) now locks both Redis and DB-fallback behavior.
+- Promoted the Wave 5 worker-aware deploy contract into the normal release path: [run-service.sh](/Volumes/code/workspace/products/ielts-vocab/scripts/cloud-deploy/run-service.sh), [release-common.sh](/Volumes/code/workspace/products/ielts-vocab/scripts/cloud-deploy/release-common.sh), and [smoke-check.sh](/Volumes/code/workspace/products/ielts-vocab/scripts/cloud-deploy/smoke-check.sh) are no longer waiting on a future rollout step, and the remaining Wave 5 closure work is broader shared-read retirement plus Redis-backed workload adoption.
+- Added deploy-time split-service schema migration support in [deploy-release.sh](/Volumes/code/workspace/products/ielts-vocab/scripts/cloud-deploy/deploy-release.sh) and [run-service-schema-migrations.py](/Volumes/code/workspace/products/ielts-vocab/scripts/run-service-schema-migrations.py), then decoupled the migration runner from app secrets so deploy bootstraps can run before service-specific secret material is loaded.
+- Preserved frontend auth sessions across deploy restarts by tightening [AuthContext.tsx](/Volumes/code/workspace/products/ielts-vocab/frontend/src/contexts/AuthContext.tsx) and the shared storage helpers in [index.ts](/Volumes/code/workspace/products/ielts-vocab/frontend/src/lib/index.ts), with regression coverage in [AuthContext.test.tsx](/Volumes/code/workspace/products/ielts-vocab/frontend/src/contexts/AuthContext.test.tsx) and [index.test.ts](/Volumes/code/workspace/products/ielts-vocab/frontend/src/lib/index.test.ts).
+- Added the Wave 5 remote worker deploy contract: [run-service.sh](/Volumes/code/workspace/products/ielts-vocab/scripts/cloud-deploy/run-service.sh) now routes all outbox/projection workers through `ielts-service@<worker>`, [release-common.sh](/Volumes/code/workspace/products/ielts-vocab/scripts/cloud-deploy/release-common.sh) now enables workers only when the target release supports them and disables them on rollback to older releases, and [smoke-check.sh](/Volumes/code/workspace/products/ielts-vocab/scripts/cloud-deploy/smoke-check.sh) now verifies worker systemd activity when the current release has worker support.
+- Executed the Wave 5 remote broker rollout on `119.29.182.134`: `/etc/ielts-vocab/microservices.env` now carries the Redis/RabbitMQ baseline, `redis` plus `rabbitmq-server` are installed and active, and the new broker validation, preflight, and smoke chain all passed remotely against the deployed host.
+- Fixed a first-install bug in [provision-broker-runtime.sh](/Volumes/code/workspace/products/ielts-vocab/scripts/cloud-deploy/provision-broker-runtime.sh): the script now installs broker packages before requiring `redis-cli`, `rabbitmqctl`, and `rabbitmq-diagnostics`, so a clean remote host can bootstrap successfully.
+- Added the Wave 5 remote broker rollout baseline: [provision-postgres.sh](/Volumes/code/workspace/products/ielts-vocab/scripts/cloud-deploy/provision-postgres.sh) now writes canonical `REDIS_*` plus `RABBITMQ_*` settings into `/etc/ielts-vocab/microservices.env`, [install-cloud-runtime.sh](/Volumes/code/workspace/products/ielts-vocab/scripts/cloud-deploy/install-cloud-runtime.sh) now installs and enables `redis` plus `rabbitmq-server`, [provision-broker-runtime.sh](/Volumes/code/workspace/products/ielts-vocab/scripts/cloud-deploy/provision-broker-runtime.sh) now provisions the remote local-host broker baseline, and [validate-broker-runtime.sh](/Volumes/code/workspace/products/ielts-vocab/scripts/cloud-deploy/validate-broker-runtime.sh) is now wired into remote validation.
+- Tightened Wave 5 broker validation so missing broker env no longer hides behind code defaults: [validate_wave5_broker_runtime.py](/Volumes/code/workspace/products/ielts-vocab/scripts/validate_wave5_broker_runtime.py) now requires explicit broker settings, [backend/.env.microservices.local](/Volumes/code/workspace/products/ielts-vocab/backend/.env.microservices.local) now carries the local Redis/RabbitMQ baseline, and remote [preflight-check.sh](/Volumes/code/workspace/products/ielts-vocab/scripts/cloud-deploy/preflight-check.sh) plus [smoke-check.sh](/Volumes/code/workspace/products/ielts-vocab/scripts/cloud-deploy/smoke-check.sh) now validate broker env, systemd units, and runtime connectivity before the HTTP smoke path.
+- Closed the code-side Wave 4 storage/artifact parity tooling: shared-`SQLite` scoped-override restart records, remote storage drill plus rollback evidence flow, and `notes export`, `example-audio`, plus `word-audio` `OSS` validate/repair operators are now all documented and wired into the remote runbook.
+- Added a Wave 5 `notes-service <- learning.wrong_word.updated` consumer path: `notes_projected_wrong_words` now materializes wrong-word facts from events, `start-microservices.sh` now boots the grouped `notes-domain-worker`, and `notes_summary_context_repository` now prefers that projection once per-user state catches up.
+- Added a Wave 5 `ai-execution-service <- notes.summary.generated` consumer path: `ai_projected_daily_summaries` now materializes notes summary facts from events, `start-microservices.sh` now boots the grouped `ai-execution-domain-worker`, `/internal/notes/summaries` is available for service-auth reads, and AI context now falls back to projected summaries when `notes-service` is unavailable.
+- Added a Wave 5 `ai-execution-service <- learning.wrong_word.updated` consumer path: `ai_projected_wrong_words` now materializes wrong-word facts from events, `start-microservices.sh` now boots the grouped `ai-execution-domain-worker`, and AI wrong-word reads plus the `get_wrong_words` tool now fall back to that projection when `learning-core-service` is unavailable.
+- Added a Wave 5 `notes-service <- ai.prompt_run.completed` consumer path: `notes_projected_prompt_runs` now materializes AI prompt-run facts from events, notes summary generation reads that projection into a new `当天 AI 使用痕迹` section, and `start-microservices.sh` now boots the grouped `notes-domain-worker`.
+- Added a Wave 5 `notes-service <- learning.session.logged` consumer path: `notes_projected_study_sessions` now materializes study-session context from events, `notes_summary_context_repository` prefers that projection once it catches up, and `start-microservices.sh` now boots the grouped `notes-domain-worker`.
+- Added Wave 5 `tts.media.generated` and `ai.prompt_run.completed` end-to-end local event flows with service-owned materialization tables, real outbox publisher workers, and admin projection workers, and exposed recent prompt-run plus TTS-media metrics in admin overview.
+- `start-microservices.sh` now boots the canonical grouped worker set: `core-eventing-worker`, `notes-domain-worker`, `ai-execution-domain-worker`, and `admin-ops-domain-worker`.
+- Split speech handling out of the main Flask app into `backend/speech_service.py` on port `5001`, and updated proxy/startup flow accordingly.
+- Added quick-memory reconciliation before learning-stats fetches so newer local records reach the backend before dashboard reads.
+- Fixed the due-review timezone skew that undercounted recently due words in `learning-stats` and `learner-profile`.
 
-## 编码与补丁策略
-- 仓库文本文件均按 UTF-8 处理，除非文件本身另有声明。
-- 使用 `apply_patch` 之前，先用行号读取精确的目标行，并以附近的干净 ASCII 或稳定代码结构为锚点。
-- 当文件出现任何文本损坏时，倾向于重写整段逻辑块，而不是匹配单行可疑内容。
-- 在同一区域 `apply_patch` 匹配失败两次，就别再用字面 mojibake 去匹配了。改用干净上下文做锚，或者直接重写整个函数 / 组件 / 文档块。
-- 不要在已经出现编码损坏的文件上继续堆叠部分编辑。先恢复 / 重读一份干净基线，再回放预期改动。
-- 任何与编码相关的修复完成后，检视 diff，确认文件没有夹带无关的文本损坏。
-- 让文本完整性回归保持绿灯：`pytest backend/tests/test_source_text_integrity.py -q`。
+## Encoding & Patch Strategy
+- Assume repo text files are UTF-8 unless the file itself proves otherwise.
+- Before using `apply_patch`, read the exact target lines with line numbers and anchor on nearby clean ASCII or stable code structure.
+- Prefer patching whole logical blocks over matching a single suspicious line when a file shows any text corruption.
+- If `apply_patch` fails to match twice on the same area, stop matching the mojibake literally. Re-anchor on clean surrounding code, or rewrite the full function/component/doc block instead.
+- Do not keep stacking partial edits onto a file that shows encoding corruption. Restore or re-read a clean base first, then replay the intended change.
+- After any encoding-related fix, inspect the diff and confirm the file did not pick up unrelated text corruption.
+- Keep the text-integrity regression green: `pytest backend/tests/test_source_text_integrity.py -q`.
 
-## 文件行数护栏
-- 跟踪的手编辑文本文件（应用代码、后端代码、测试、脚本、文档、配置）硬上限为 `500` 行。
-- `vocabulary_data/**` 与 `pnpm-lock.yaml` 显式豁免，它们是生成数据或 lockfile。
-- 历史超长文件在 `scripts/file-line-limit.config.json` 中冻结。它们是临时豁免，**不得**超过记录基线，并应随时间被拆分下来。
-- `scripts/check-file-line-limits.mjs` 是执行闸口。出现新的超长文件、基线文件再涨、或者文件降到 `<= 500` 行后基线文件未清理时，它都会失败。
-- `frontend/eslint.config.mjs` 对跟踪的 JS/TS 文件同样落 `500` 行上限，同时让超长基线在文件被拆分前临时豁免。
-- `.github/workflows/ci.yml` 在前端测试 / 构建前显式跑文件行数脚本与 ESLint，使规则在 CI 而非仅本地被强制。
+## File Line Guardrail
+- The hard cap is `500` lines for tracked hand-edited text files across app code, backend code, tests, scripts, docs, and config.
+- `vocabulary_data/**` and `pnpm-lock.yaml` are explicitly exempt because they are generated data or lockfiles.
+- Historical oversize files are frozen in `scripts/file-line-limit.config.json`. They are temporary exceptions, may not grow past their recorded baseline, and should be split down over time.
+- `scripts/check-file-line-limits.mjs` is the enforcement gate. It fails when a new oversize file appears, when a baseline file grows, or when the baseline file is not cleaned up after a file drops back to `<= 500` lines.
+- `frontend/eslint.config.mjs` mirrors the `500`-line cap for tracked JS/TS files, while letting the oversize baseline remain temporarily exempt until those files are split.
+- `.github/workflows/ci.yml` runs both the file-line script and ESLint explicitly before frontend tests/build so the rule is enforced in CI, not just locally.
 
-## 技术栈
-- Web：React 19 + TypeScript + Vite
-- 移动端：`apps/mobile` 下的 React Native，Android 与 iOS 除非显式选择未来原生拆分，否则同属一个 app
-- 共享客户端核心：`packages/app-core`，承载平台无关的 schema、API 客户端、auth / session 契约与练习逻辑
-- 样式：SCSS + CSS 变量
-- 校验：`frontend/src/lib/schemas.ts` 中的 Zod 运行时 schema
-- 后端：Python Flask + SQLite
-- 鉴权：JWT + localStorage
-- 实时：用于语音的 Socket.IO / WebSocket
+## Technology Stack
+- Web: React 19 + TypeScript + Vite
+- Mobile: React Native under `apps/mobile`, with Android and iOS owned by the same app unless a future native split is explicitly chosen
+- Shared client core: `packages/app-core` for platform-neutral schemas, API clients, auth/session contracts, and practice logic
+- Styling: SCSS + CSS variables
+- Validation: Zod runtime schemas in `frontend/src/lib/schemas.ts`
+- Backend: Python Flask + SQLite
+- Auth: JWT + localStorage
+- Realtime: Socket.IO / WebSocket for speech
 
-## 项目结构
+## Project Structure
 ```text
 frontend/
-- package.json              # 前端 package manifest
-- vite.config.ts            # 前端 build / proxy 配置
-- vitest.config.ts          # 前端单元测试配置
-- playwright.config.ts      # 前端 e2e 配置
-- index.html                # Vite HTML 入口
-- assets/                   # 静态资源
+- package.json              # Frontend package manifest
+- vite.config.ts            # Frontend build/proxy config
+- vitest.config.ts          # Frontend unit-test config
+- playwright.config.ts      # Frontend e2e config
+- index.html                # Vite HTML entry
+- assets/                   # Static assets
 - src/
-  - app/                    # App router 入口
+  - app/                    # App router entry
   - components/
-    - ui/                   # 基础 UI 组件
-    - layout/               # 共享 shell / layout
-    - practice/             # 练习特性组件
+    - ui/                   # Base UI components
+    - layout/               # Shared shell/layout pieces
+    - practice/             # Practice feature components
   - contexts/               # Auth / Settings / Toast / AIChat
   - features/
-    - vocabulary/hooks/     # books、words、progress、stats 的数据 hook
-    - ai-chat/              # AI 聊天特性
-    - speech/               # 语音识别特性
-  - hooks/                  # 共享 hook
-  - lib/                    # schema、helper、sync 逻辑、格式化
-  - styles/                 # 全局与页面 SCSS
+    - vocabulary/hooks/     # Data hooks for books, words, progress, stats
+    - ai-chat/              # AI chat feature
+    - speech/               # Speech recognition feature
+  - hooks/                  # Shared hooks
+  - lib/                    # Schemas, helpers, sync logic, formatting
+  - styles/                 # Global and page SCSS
  - tests/
-   - e2e/                   # Playwright 端到端覆盖
+   - e2e/                   # Playwright end-to-end coverage
 
 backend/
-- app.py                    # :5000 的兼容单体 API
-- speech_service.py         # :5001 的兼容语音 Socket.IO 服务
-- models.py                 # 数据库模型
-- routes/                   # API 路由模块
-- services/                 # 后端服务逻辑
-- tests/                    # 后端测试
+- app.py                    # Compatibility monolith API on :5000
+- speech_service.py         # Compatibility speech Socket.IO service on :5001
+- models.py                 # Database models
+- routes/                   # API route modules
+- services/                 # Backend service logic
+- tests/                    # Backend tests
 
 apps/
-- gateway-bff/              # :8000 上的规范浏览器入口
-- mobile/                   # React Native Android/iOS app
+- gateway-bff/             # Canonical browser ingress on :8000
+- mobile/                  # React Native Android/iOS app
 
 packages/
-- app-core/                 # 共享的平台无关 TypeScript 客户端契约与逻辑
+- app-core/                # Shared platform-neutral TypeScript client contracts and logic
 
 services/
-- */main.py                 # :8101-8108 上的拆分后端服务
-- asr-service/socketio_main.py # :5001 上的规范 Socket.IO 运行时
+- */main.py                # Split backend services on :8101-8108
+- asr-service/socketio_main.py # Canonical Socket.IO runtime on :5001
 
 docs/
-- architecture/             # 规范与审计
-- governance/               # 产品与 UI 治理日志
-- milestone/               # 可持久化的交付快照
-- operations/               # runbook 与运维文档
-- planning/                 # 设计与实施计划
-- logs/submit/              # append-only 提交记录
+- architecture/             # Specs and audits
+- governance/               # Product and UI governance logs
+- milestone/               # Durable delivery snapshots
+- operations/               # Runbooks and operator docs
+- planning/                 # Design and implementation plans
+- logs/submit/              # Append-only submit records
 
-pnpm-workspace.yaml         # 根 workspace 编排
+pnpm-workspace.yaml         # Root workspace orchestration
 ```
 
-## Zod 校验
-- schema 位置：`frontend/src/lib/schemas.ts`
-- 校验工具：`frontend/src/lib/validation.ts`
-- 表单 hook：`frontend/src/lib/useForm.ts`
-- auth、settings、toast、AI chat 与 vocabulary 的 hook 都通过 Zod 驱动的 helper 校验输入或 API 负载。
+## Zod Validation
+- Schema location: `frontend/src/lib/schemas.ts`
+- Validation utilities: `frontend/src/lib/validation.ts`
+- Form hook: `frontend/src/lib/useForm.ts`
+- Auth, settings, toast, AI chat, and vocabulary hooks all validate inputs or API payloads through Zod-backed helpers.
 
-## 关键功能
-1. 鉴权与用户资料管理
-2. 词书、章节与进度跟踪
-3. 基础练习模式：`smart`、`listening`、`meaning`、`dictation`、`follow`、`radio`、`quickmemory`、`errors`
-4. Ebbinghaus 到期复习与错词恢复，直接联动统计与学习者画像
-5. 独立的进阶五维 / AI 口语模式族，用于付费或 2.0 推广
-6. 引导式学习首页与学习者画像驱动的推荐
-7. AI 助手、日记与每日摘要流程
-8. 独立的语音识别服务与 TTS 工具链
+## Key Features
+1. Authentication and user profile management
+2. Vocabulary books, chapters, and progress tracking
+3. Foundational practice modes: `smart`, `listening`, `meaning`, `dictation`, `follow`, `radio`, `quickmemory`, `errors`
+4. Ebbinghaus due review and wrong-word recovery linked directly to statistics and learner profile
+5. Independent advanced five-dimension / AI speaking mode family for paid or 2.0 rollout
+6. Guided study homepage and learner-profile driven recommendations
+7. AI assistant, journal, and daily summary flows
+8. Dedicated speech recognition service and TTS tooling
 
-## 后端 API
-- `/api/auth`：register、login、logout、avatar、current user
-- `/api/books`：books、chapters、words、progress
-- `/api/progress`：旧的按天进度
-- `/api/ai`：learning stats、learner profile、quick memory、AI 助手、练习 helper
-- `/api/notes`：notes、summaries、exports
-- `/api/tts`：TTS 音频与生成状态
-- `/api/admin`：admin 能力
+## Backend API
+- `/api/auth`: register, login, logout, avatar, current user
+- `/api/books`: books, chapters, words, progress
+- `/api/progress`: legacy day-based progress
+- `/api/ai`: learning stats, learner profile, quick memory, AI assistant, practice helpers
+- `/api/notes`: notes, summaries, exports
+- `/api/tts`: TTS audio and generation state
+- `/api/admin`: admin capabilities
 
-## 开发
+## Development
 ```bash
-# 前端
+# Frontend
 pnpm install
 pnpm dev
 pnpm build
 pnpm preview
 pnpm test:e2e
 
-# 移动端与共享客户端核心
+# Mobile and shared client core
 pnpm mobile:typecheck
 pnpm mobile:test
 pnpm app-core:typecheck
 pnpm app-core:test
 pnpm verify:clients
 
-# 后端
+# Backend
 cd backend
 pip install -r requirements.txt
 
-# 规范拆分后端启动
+# Canonical split backend startup
 ./start-microservices.sh
 
-# 单体兼容回滚演练
+# Monolith compatibility rollback drill
 ./start-monolith-compat.sh
 
-# 一键本地生产形态启动
+# One-click local production-style startup
 ./start-project.sh
 ```
 
-## 测试账号
-- 专用于本地 / 手工验证的测试账号：用户名 `admin`
-- 密码：`admin123456`
+## Test Account
+- Dedicated test account for local/manual verification: username `admin`
+- Password: `admin123456`
 
-## 生产 SSH 访问
-- 生产 SSH 连接元数据已经登记在 `backend/.env`；当 Codex 需要远程访问时，先从该文件读 `PROD_SSH_HOST`、`PROD_SSH_USER`、`PROD_SSH_KEY_PATH` 或 `PROD_SSH_PRIVATE_KEY_PATH`，而不是假设本地 shell 没有凭据。
-- 把 `backend/.env` 视为敏感：仅用它来解析 SSH host、用户名与本地 key 文件路径，不要把私钥内容或无关密钥回显给用户。
-- 推荐的 PowerShell 发现片段：
+## Production SSH Access
+- Production SSH connection metadata is already tracked in `backend/.env`; when Codex needs remote access, read `PROD_SSH_HOST`, `PROD_SSH_USER`, and `PROD_SSH_KEY_PATH` or `PROD_SSH_PRIVATE_KEY_PATH` from that file first instead of assuming the local shell has no credentials.
+- Treat `backend/.env` as sensitive: use it to resolve the SSH host, username, and local key-file path, but never echo private-key contents or unrelated secrets back to the user.
+- Preferred PowerShell discovery snippet:
 ```powershell
 $envPath = 'backend/.env'
 $sshKey = (Get-Content $envPath | Where-Object { $_ -match '^PROD_SSH_(PRIVATE_)?KEY_PATH=' } | Select-Object -First 1).Split('=', 2)[1].Trim()
@@ -273,29 +275,49 @@ $remoteHost = (Get-Content $envPath | Where-Object { $_ -match '^PROD_SSH_HOST='
 $remoteUser = (Get-Content $envPath | Where-Object { $_ -match '^PROD_SSH_USER=' } | Select-Object -First 1).Split('=', 2)[1].Trim()
 ssh -i $sshKey -o StrictHostKeyChecking=accept-new "$remoteUser@$remoteHost" "hostname"
 ```
-- 连上后推荐的生产日志命令：
+- Preferred production log commands after connecting:
 ```bash
 sudo journalctl -u 'ielts-service@gateway-bff' -u 'ielts-service@learning-core-service' -u 'ielts-service@ai-execution-service' -n 200 --no-pager
 sudo journalctl -u 'ielts-service@catalog-content-service' -n 200 --no-pager
 ```
-- 当浏览器请求只在登录用户上失败时，**先**一起检视 `gateway-bff`、`learning-core-service`、`ai-execution-service`、`catalog-content-service`，再下结论说前端 auth 流有错。
+- When a browser request fails only for logged-in users, inspect `gateway-bff`, `learning-core-service`, `ai-execution-service`, and `catalog-content-service` together before assuming the frontend auth flow is at fault.
 
-## 远程生产拓扑
-1. `https://axiomaticworld.com/` 终结在云端 nginx 入口 `119.29.182.134`
-2. nginx 从 `/var/www/ielts-vocab/current` 下的活跃 release 软链提供前端 build
-3. nginx 把 `/api/*` 代理到活跃 HTTP slot `gateway-bff` 的 `127.0.0.1:18000` 或 `127.0.0.1:28000`
-4. `gateway-bff` 把浏览器 API 流量分发给同 slot 的微服务 `18101-18108` 或 `28101-28108`
-5. nginx 把 `/socket.io/*` 直接代理到 ASR Socket.IO `127.0.0.1:5001`
+## Remote Production Topology
+1. `https://axiomaticworld.com/` terminates at the cloud nginx entrypoint on `119.29.182.134`
+2. nginx serves the frontend build from the active release symlink under `/var/www/ielts-vocab/current`
+3. nginx proxies `/api/*` to the active HTTP slot `gateway-bff` on `127.0.0.1:18000` or `127.0.0.1:28000`
+4. `gateway-bff` fans out browser API traffic to the same-slot microservices on `18101-18108` or `28101-28108`
+5. nginx proxies `/socket.io/*` directly to ASR Socket.IO on `127.0.0.1:5001`
 
-排查域问题时，把上述远程链路视作部署上下文，不要假设有本地隧道介入。
+When debugging domain issues, treat this remote chain as the deployment context instead of assuming any local tunnel is involved.
 
-## 本地复现拓扑
-1. Vite preview 在 `http://127.0.0.1:3002` 提供浏览器 UI
-2. 本地浏览器 API 入口在 `http://127.0.0.1:8000`
-3. 拆分后端服务在 `127.0.0.1:8101-8108`
-4. 本地 `/socket.io/*` 流量走到 ASR Socket.IO `127.0.0.1:5001`
+## Local Reproduction Topology
+1. Vite preview serves the browser UI on `http://127.0.0.1:3002`
+2. Local browser API ingress runs on `http://127.0.0.1:8000`
+3. Split backend services run on `127.0.0.1:8101-8108`
+4. Local `/socket.io/*` traffic goes to ASR Socket.IO on `127.0.0.1:5001`
 
-## 浏览器接口
-- `speechSynthesis`：发音播放
-- `localStorage`：auth、settings、progress、quick-memory 缓存
-- `WebSocket` / Socket.IO：实时语音识别
+## Change Log
+
+The canonical change log lives at [`docs/state/CHANGELOG.md`](docs/state/CHANGELOG.md), with a Chinese mirror at [`docs/state/CHANGELOG.zh-CN.md`](docs/state/CHANGELOG.zh-CN.md). New entries must be appended there. The root-level [`CHANGE.md`](CHANGE.md) is a pointer file (per AR-BOOTSTRAP-002.1) and should not be hand-edited unless redirecting to a new canonical location.
+
+## Browser APIs
+- `speechSynthesis`: pronunciation playback
+- `localStorage`: auth, settings, progress, quick-memory caches
+- `WebSocket` / Socket.IO: realtime speech recognition
+
+## Boundaries
+
+- **可写范围**：`frontend/`、`backend/`、`packages/platform-sdk/`、`docs/`、根级 `AGENTS.md` / `README.md` / `README.zh-CN.md` / `CHANGE.md`。
+- **不可写**：`reference-materials/raw/`（静态 IELTS PDF / audio，由 `.gitignore` 排除的数据源）；工作区级 `references/*` 与 `foundation/workspace-governance/`。
+- **不要**在没有 owner 显式指令的情况下合 `main`、发布新 release、改 `nginx` 远端站点配置或动生产数据库。
+- **不要**把硬编码 JWT / API key / 用户邮箱写进 commit；产品 OAuth / 邮箱凭据由 `docs/governance/` 治理，本仓库不直接持有。
+- **不要**绕过 `gateway-bff` 让前端直接打到后端微服务；微服务只接受本机 loopback。
+
+## Request Defaults
+
+- 把用户最新一条消息视为当前事实。
+- 接手 / 零上下文 / 检查当前状态 / 是否可以开始后续开发按 ready 任务处理：先跑 `node /Volumes/code/workspace/scripts/workspace-project validate` + `pnpm --dir frontend verify:repo-guards`，再读本文件 + `README.md` / `README.zh-CN.md` + `docs/state/CHANGELOG.md`。
+- 修改 `frontend/**` → 至少 `pnpm --dir frontend typecheck` 与对应 Vitest 套件；修改 `backend/**` → `pytest` 在 `backend/tests` 下；改共享契约或 `gateway-bff` → 同步跑上下游服务冒烟。
+- 普通 ready 检查禁止 `workspace-project deps / consumers / profile`，除非用户明确要求跨项目契约分析。
+- 答复结尾不再列多个"下一步选项"；按 `Verification` 默认动作直接推进或报告。

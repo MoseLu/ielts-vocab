@@ -66,8 +66,8 @@ scripts/                    # 守卫脚本与仓库工具
 vocabulary_data/            # 词书与词汇数据
 reference-materials/        # 静态参考资料说明与本地 raw 资源
 AGENTS.md                   # 仓库级工作约束
-MILESTONE.md                # 里程碑总览（已迁 docs/state/MILESTONE.md）
-TODO.md                     # 当前任务清单（已迁 docs/state/TODO.md）
+MILESTONE.md                # 里程碑总览
+TODO.md                     # 当前任务清单
 scripts/setup-mac-runtime.sh # macOS 本地 runtime 安装脚本
 start-project.sh            # 本地生产式启动脚本
 start-microservices.sh      # split backend 默认启动脚本
@@ -86,7 +86,7 @@ start-microservices.sh      # split backend 默认启动脚本
 生产式本地代理链路：
 
 ```text
-https://ielts.axiomaticworld.com（旧环境可继续使用 axiomaticworld.com）
+https://ielts.axiomaticworld.com (旧环境可继续使用 axiomaticworld.com)
 -> local :80
 -> nginx
 -> vite preview :3002

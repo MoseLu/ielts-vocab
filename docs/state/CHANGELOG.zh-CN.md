@@ -11,6 +11,10 @@
 ### 运营
 - 移除当前本地代理指引中已废弃的 NATAPP 跳转，并将 IELTS 路由统一到项目子域名模型（`ielts.axiomaticworld.com`）；DNS 与证书迁移期间继续保留根域名兼容链路。
 
+### 文档
+- Migrated `docs/project-docs.manifest.json` to the version 2 zero-context onboarding contract with real entrypoints, commands, environment metadata, workspace contracts, current work, troubleshooting, decisions, ownership, and dated verification evidence.
+- Added zero-context handoff governance to `TODO.md`, including the completed migration and the ongoing freshness contract.
+
 ## [1.2.6] - 2026-06-01
 
 ### 修复
