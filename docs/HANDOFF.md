@@ -70,21 +70,7 @@
 - ADR: not recorded
 - Changelog: `docs/state/CHANGELOG.md`
 - Submit log: `docs/logs/submit`
-- Last verified: `2026-08-23`
+- Last verified: `2026-09-25`
 - Evidence: `Manifest v2 path-fix-up applied on 2026-08-23: PRD.md, TDD.md, root TODO.md, root MILESTONE.md do not exist on disk and were removed from readOrder / currentWork; backend/TODO.md and docs/project-audit-2026-03-31.md used as live anchors.`, `Full `pnpm --dir frontend verify:repo-guards` was not re-run this session; owner must re-run to confirm frontend verification still passes.`
 
 > Generated from `docs/project-docs.manifest.json`; edit the manifest, then regenerate this file.
-
-## Ahead-batch snapshot (2026-09-24)
-
-- Branch: `dev`
-- Upstream: `origin/dev`
-- Ahead commits: 5
-- Per v2.1 PRD §4 batch-separation rule:
-  - governance batch: 1
-  - docs batch: 1
-  - product batch (feat/fix/refactor): 0
-  - other (submit logs, agent sessions, etc.): 3
-- Next verification gate (project-local): `pnpm --dir products/ielts-vocab/frontend verify:repo-guards && pytest products/ielts-vocab/backend/tests`
-- Push strategy: owner decides; agent does not auto-push.
-
