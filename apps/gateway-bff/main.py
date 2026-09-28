@@ -54,6 +54,7 @@ load_split_service_env(service_name='gateway-bff')
 
 DEFAULT_UPSTREAM_TIMEOUT_SECONDS = 10.0
 TRANSIENT_WORD_AUDIO_CACHE_ERROR_STATUSES = frozenset({502, 503, 504})
+_requests_total = 0
 
 
 def _upstream_timeout_seconds() -> float:
@@ -150,6 +151,29 @@ app = create_service_app(
     extra_health={'edge_compatibility': True},
 )
 app.include_router(browser_compat_router)
+
+
+@app.middleware('http')
+async def observe_requests(request: Request, call_next):
+    global _requests_total
+    if request.url.path != '/metrics':
+        _requests_total += 1
+    return await call_next(request)
+
+
+@app.get('/metrics', include_in_schema=False)
+def metrics() -> Response:
+    return Response(
+        content=(
+            '# HELP axi_ielts_gateway_bff_requests_total Total HTTP requests handled by the gateway BFF.\n'
+            '# TYPE axi_ielts_gateway_bff_requests_total counter\n'
+            f'axi_ielts_gateway_bff_requests_total {_requests_total}\n'
+            '# HELP axi_ielts_gateway_bff_up Whether the gateway BFF is serving requests.\n'
+            '# TYPE axi_ielts_gateway_bff_up gauge\n'
+            'axi_ielts_gateway_bff_up 1\n'
+        ),
+        media_type='text/plain; version=0.0.4',
+    )
 
 
 @app.get('/api/tts/voices')
