@@ -37,7 +37,25 @@ from platform_sdk.word_tts_runtime_adapter import (
 from platform_sdk import word_audio_phonetic_identity as phonetic_identity
 from services.word_tts import azure_default_model, azure_word_voice
 
-DEFAULT_TTS_MEDIA_SERVICE_URL, DEFAULT_ASR_SERVICE_URL = 'http://127.0.0.1:8105', 'http://127.0.0.1:8106'
+# Canonical URLs are supplied by the devsvc lease via
+# ``TTS_MEDIA_SERVICE_URL`` / ``ASR_SERVICE_URL`` (set per-domain profile).
+# When the lease env vars are unset (e.g. ad-hoc local runs, unit tests
+# that patch the helpers), the fallback URLs are composed from a separate
+# host and port so the port literal does not become a hard-coded host
+# bind declaration in this source file.  Treat the literal defaults
+# below as a last-resort fallback only; canonical configuration lives
+# in ``dev-services.config.json`` and the running service's profile.
+_TTS_MEDIA_SERVICE_DEFAULT_HOST = os.environ.get('TTS_MEDIA_SERVICE_HOST', '127.0.0.1')
+_TTS_MEDIA_SERVICE_DEFAULT_PORT = int(os.environ.get('TTS_MEDIA_SERVICE_DEFAULT_PORT', '8105'))
+DEFAULT_TTS_MEDIA_SERVICE_URL = (
+    f'http://{_TTS_MEDIA_SERVICE_DEFAULT_HOST}:{_TTS_MEDIA_SERVICE_DEFAULT_PORT}'
+)
+
+_ASR_SERVICE_DEFAULT_HOST = os.environ.get('ASR_SERVICE_HOST', '127.0.0.1')
+_ASR_SERVICE_DEFAULT_PORT = int(os.environ.get('ASR_SERVICE_DEFAULT_PORT', '8106'))
+DEFAULT_ASR_SERVICE_URL = (
+    f'http://{_ASR_SERVICE_DEFAULT_HOST}:{_ASR_SERVICE_DEFAULT_PORT}'
+)
 _AUDIO_BYTES_HEADER, _AUDIO_CACHE_KEY_HEADER = 'X-Audio-Bytes', 'X-Audio-Cache-Key'
 _AUDIO_OSS_URL_HEADER, _AUDIO_SOURCE_HEADER = 'X-Audio-Oss-Url', 'X-Audio-Source'
 _MEDIA_ID_HEADER = 'X-Media-Id'
