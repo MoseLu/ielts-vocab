@@ -127,10 +127,40 @@ def test_resolve_word_audio_request_uses_phonetic_specific_identity(monkeypatch)
 
     candidates = module.resolve_word_audio_request_candidates('the rest of')
 
-    assert len(candidates) == 1
+    assert len(candidates) == 2
     assert candidates[0]['phonetic'] == '/ðə rest əv/'
     assert '@ipa-' in candidates[0]['model']
     assert candidates[0]['file_name'].startswith('the rest of-azure-rest:test@azure-word-v6')
+    assert candidates[1]['model'] == 'azure-rest:test@azure-word-v6-ielts-rp-female-onset-buffer'
+
+
+def test_resolve_word_audio_request_falls_back_to_production_override_upload(monkeypatch):
+    module = _load_gateway_media_proxy_module()
+
+    monkeypatch.setattr(
+        module,
+        'resolve_normal_word_audio_identity',
+        lambda: (
+            'azure',
+            'azure-rest:test@azure-word-v6-ielts-rp-female-onset-buffer',
+            'en-GB-LibbyNeural',
+        ),
+    )
+    monkeypatch.setattr(
+        module.phonetic_identity,
+        'explicit_word_audio_phonetic',
+        lambda word: '/kənˈsɪs.tə/' if word == 'consistency' else '',
+    )
+
+    candidates = module.resolve_word_audio_request_candidates('consistency')
+
+    assert len(candidates) == 2
+    assert candidates[0]['model'].startswith(
+        'azure-rest:test@azure-word-v6-ielts-rp-female-onset-buffer@ipa-'
+    )
+    assert candidates[1]['model'] == (
+        'azure-rest:test@azure-word-v6-ielts-rp-female-onset-buffer'
+    )
 
 
 def test_resolve_word_audio_request_uses_tts_specific_phonetic_override(monkeypatch):
