@@ -46,7 +46,7 @@ jobs:
           ref: ${{ needs.resolve-ref.outputs.git_ref }}
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: 20
 
@@ -122,7 +122,7 @@ jobs:
           ref: ${{ needs.resolve-ref.outputs.git_ref }}
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: 20
 
