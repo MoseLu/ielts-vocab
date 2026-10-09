@@ -94,3 +94,6 @@ vocabulary_data/vocabulary_examples.json
 
 # Static reference materials kept under the product tree but not tracked
 reference-materials/raw/
+
+# Auto-generated submit logs (post-commit hook snapshots, not source)
+docs/logs/submit/*.md
