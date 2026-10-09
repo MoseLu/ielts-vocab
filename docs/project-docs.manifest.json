@@ -133,6 +133,12 @@
       "minimax-tokenplan",
       "ollama-local"
     ],
+    "consumesStatus": {
+      "ai-capability": "planned",
+      "minimax-tokenplan": "planned",
+      "ollama-local": "planned"
+    },
+    "consumesNote": "Declared as metadata-level planned dependencies only. No code in this repository currently invokes the cc-connect CLIs behind these providers (verified 2026-10-09: grep across .py/.ts/.tsx/.js/.jsx/.mjs/.sh/.go/.yaml/.yml returns 0 hits; only PRD.md, HANDOFF.md and this manifest reference them). Promote each entry from `planned` to `verified` when an actual subprocess / SDK call lands in the codebase, and update the `contracts.consumes` schema once a verified invocation site exists.",
     "files": [
       "AGENTS.md",
       "packages/platform-sdk/platform_sdk/asr_runtime",
