@@ -28,7 +28,7 @@ app = create_service_shell_app(
     version='0.1.0',
     readiness_checks={
         'database': make_sqlalchemy_readiness_check(notes_flask_app.config['SQLALCHEMY_DATABASE_URI']),
-        'aliyun_oss': bucket_is_configured,
+        'aliyun_oss': lambda: (os.environ.get('AXI_OSS_READINESS_REQUIRED', 'true').strip().lower() in ('0', 'false', 'no')) or bucket_is_configured(),
     },
     extra_health={'notes_compatibility': True, 'object_storage': 'aliyun-oss'},
 )
