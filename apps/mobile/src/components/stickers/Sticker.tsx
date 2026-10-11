@@ -18,6 +18,7 @@ type StickerProps = {
   decorative?: boolean
   height: number
   keyName: StickerKey
+  resizeMode?: 'contain' | 'stretch'
   style?: StyleProp<ImageStyle>
   width: number
 }
@@ -56,6 +57,7 @@ export function Sticker({
   decorative = stickerDefaults.decorative,
   height,
   keyName,
+  resizeMode = 'contain',
   style,
   width,
 }: StickerProps) {
@@ -75,7 +77,7 @@ export function Sticker({
   return (
     <Image
       {...accessibilityProps}
-      resizeMode="contain"
+      resizeMode={resizeMode}
       source={source}
       style={[{ height, width }, style]}
     />

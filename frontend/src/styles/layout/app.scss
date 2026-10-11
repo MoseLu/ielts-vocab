@@ -186,79 +186,261 @@ body,
 
 /* ── Bottom Navigation (Mobile) ── */
 .bottom-nav {
+    --bottom-nav-active-color: var(--theme-swatch-orange);
+    --bottom-nav-default-color: var(--theme-swatch-gray);
+    --bottom-nav-motion: cubic-bezier(0.2, 0.8, 0.2, 1);
     display: none;
     position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
-    height: var(--size-64);
-    background: var(--surface-overlay);
-    border-top: var(--size-1) solid var(--border-strong);
+    height: calc(var(--size-76) + env(safe-area-inset-bottom, 0px));
+    align-items: flex-start;
+    gap: var(--size-2);
+    padding: var(--size-6) max(var(--size-10), env(safe-area-inset-left, 0px)) calc(var(--size-8) + env(safe-area-inset-bottom, 0px)) max(var(--size-10), env(safe-area-inset-right, 0px));
+    background: color-mix(in srgb, var(--surface-overlay) var(--mix-98), transparent);
+    border-top: var(--size-1) solid color-mix(in srgb, var(--border-strong) var(--mix-62), transparent);
     z-index: var(--layer-sticky);
-    box-shadow: var(--shadow-floating);
+    box-shadow: 0 calc(var(--size-8) * -1) var(--size-24) color-mix(in srgb, var(--surface-code) var(--mix-10), transparent);
     backdrop-filter: blur(var(--size-14));
 }
 
 .bottom-nav-item {
     flex: 1;
+    min-width: 0;
+    height: var(--size-62);
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: var(--size-3);
+    gap: var(--size-2);
+    position: relative;
+    overflow: hidden;
     background: transparent;
     border: none;
+    border-radius: var(--radius-pill);
     cursor: pointer;
-    color: var(--text-tertiary);
-    transition: color var(--transition-fast), background var(--transition-fast);
-    padding: var(--size-5) 0;
+    color: var(--bottom-nav-default-color);
+    transition:
+        color var(--transition-fast) var(--bottom-nav-motion),
+        transform var(--transition-fast) var(--bottom-nav-motion);
+    padding: var(--size-5) var(--size-2);
+}
+
+.bottom-nav-item::before {
+    display: none;
+}
+
+.bottom-nav-item::after {
+    display: none;
 }
 
 .bottom-nav-item:active {
-    background: var(--surface-hover);
+    transform: translateY(var(--size-1));
 }
 
 .bottom-nav-item.active {
-    color: var(--accent);
+    color: var(--bottom-nav-active-color);
 }
 
 .bottom-nav-icon {
-    width: var(--size-30);
-    height: var(--size-30);
+    width: var(--size-38);
+    height: var(--size-36);
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: var(--radius-10);
-    color: inherit;
-    transition: background var(--transition-fast), color var(--transition-fast), box-shadow var(--transition-fast);
+    flex-shrink: 0;
+    position: relative;
+    transition: transform 220ms var(--bottom-nav-motion), opacity var(--transition-fast);
+}
+
+.bottom-nav-icon svg,
+.bottom-nav-icon-svg {
+    width: var(--size-32);
+    height: var(--size-32);
+    display: block;
+}
+
+.bottom-nav-icon-svg {
+    color: currentColor;
+    line-height: 0;
+}
+
+.bottom-nav-icon-svg svg {
+    overflow: visible;
 }
 
 .bottom-nav-item.active .bottom-nav-icon {
-    background: var(--accent);
-    color: var(--text-inverse);
-    box-shadow: 0 var(--size-2) var(--size-6) rgba(var(--accent-rgb), var(--alpha-24));
+    animation: bottom-nav-icon-activate 240ms var(--bottom-nav-motion);
 }
 
-.bottom-nav-item--primary .bottom-nav-icon {
-    background: var(--accent-light);
-    color: var(--accent);
-    box-shadow: inset 0 0 0 var(--size-1) rgba(var(--accent-rgb), var(--alpha-18));
-}
-
-.bottom-nav-item--primary.active .bottom-nav-icon {
-    background: var(--accent);
-    color: var(--text-inverse);
-}
-
-.bottom-nav-icon svg {
-    width: var(--size-20);
-    height: var(--size-20);
+.bottom-nav-item.active .bottom-nav-icon-svg {
+    filter: drop-shadow(0 var(--size-2) var(--size-5) color-mix(in srgb, var(--bottom-nav-active-color) var(--mix-24), transparent));
 }
 
 .bottom-nav-label {
-    font-size: var(--size-10);
+    font-size: var(--size-11);
     font-weight: 600;
-    line-height: var(--size-12);
+    line-height: var(--size-13);
+    position: relative;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    letter-spacing: 0;
+    transition: color var(--transition-fast), font-weight var(--transition-fast);
+}
+
+.bottom-nav-item.active .bottom-nav-label {
+    font-weight: 700;
+}
+
+.bottom-nav-item.active #home-door,
+.bottom-nav-item.active #home-light,
+.bottom-nav-item.active #profile-head-fill {
+    animation: bottom-nav-fade-in 220ms var(--bottom-nav-motion);
+}
+
+.bottom-nav-item.active #book-left-page {
+    animation: bottom-nav-book-left 250ms var(--bottom-nav-motion);
+    transform-box: fill-box;
+    transform-origin: right center;
+}
+
+.bottom-nav-item.active #book-right-page {
+    animation: bottom-nav-book-right 250ms var(--bottom-nav-motion);
+    transform-box: fill-box;
+    transform-origin: left center;
+}
+
+.bottom-nav-item.active #practice-pencil {
+    animation: bottom-nav-pencil 220ms var(--bottom-nav-motion);
+    transform-box: fill-box;
+    transform-origin: center;
+}
+
+.bottom-nav-item.active #data-pie-slice {
+    animation: bottom-nav-pie-slice 240ms var(--bottom-nav-motion);
+    transform-box: fill-box;
+    transform-origin: center;
+}
+
+.bottom-nav-item.active #book-left-line-1,
+.bottom-nav-item.active #book-left-line-2,
+.bottom-nav-item.active #book-right-line-1,
+.bottom-nav-item.active #book-right-line-2,
+.bottom-nav-item.active #practice-writing-line,
+.bottom-nav-item.active #data-pie-circle,
+.bottom-nav-item.active #profile-body {
+    animation: bottom-nav-stroke-draw 240ms var(--bottom-nav-motion);
+    stroke-dasharray: 1;
+    stroke-dashoffset: 0;
+}
+
+@keyframes bottom-nav-icon-activate {
+    0% {
+        transform: translateY(0) scale(1);
+    }
+
+    46% {
+        transform: translateY(calc(var(--size-2) * -1)) scale(1.08);
+    }
+
+    100% {
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes bottom-nav-fade-in {
+    0% {
+        opacity: 0;
+    }
+}
+
+@keyframes bottom-nav-book-left {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(-6deg);
+    }
+}
+
+@keyframes bottom-nav-book-right {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(6deg);
+    }
+}
+
+@keyframes bottom-nav-pencil {
+    0% {
+        transform: translateY(0) rotate(0deg);
+    }
+
+    50% {
+        transform: translateY(var(--size-1)) rotate(-4deg);
+    }
+
+    100% {
+        transform: translateY(0) rotate(0deg);
+    }
+}
+
+@keyframes bottom-nav-pie-slice {
+    0% {
+        transform: rotate(-8deg);
+    }
+
+    100% {
+        transform: rotate(0deg);
+    }
+}
+
+@keyframes bottom-nav-stroke-draw {
+    0% {
+        opacity: 0;
+        stroke-dashoffset: 1;
+    }
+
+    100% {
+        opacity: 1;
+        stroke-dashoffset: 0;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .bottom-nav-item.active .bottom-nav-icon,
+    .bottom-nav-item.active #home-door,
+    .bottom-nav-item.active #home-light,
+    .bottom-nav-item.active #profile-head-fill,
+    .bottom-nav-item.active #book-left-page,
+    .bottom-nav-item.active #book-right-page,
+    .bottom-nav-item.active #practice-pencil,
+    .bottom-nav-item.active #data-pie-slice,
+    .bottom-nav-item.active #book-left-line-1,
+    .bottom-nav-item.active #book-left-line-2,
+    .bottom-nav-item.active #book-right-line-1,
+    .bottom-nav-item.active #book-right-line-2,
+    .bottom-nav-item.active #practice-writing-line,
+    .bottom-nav-item.active #data-pie-circle,
+    .bottom-nav-item.active #profile-body {
+        animation: none;
+    }
+}
+
+@media (hover: hover) {
+    .bottom-nav-item:hover {
+        color: var(--text-secondary);
+    }
+
+    .bottom-nav-item.active:hover {
+        color: var(--bottom-nav-active-color);
+    }
 }
 
 /* Show bottom nav on mobile/tablet, adjust body padding */
@@ -268,7 +450,7 @@ body,
     }
 
     .app-body {
-        padding-bottom: calc(var(--size-64) + var(--size-10));
+        padding-bottom: calc(var(--size-76) + var(--size-10));
     }
 
     .page-content {

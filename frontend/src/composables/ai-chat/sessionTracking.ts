@@ -38,6 +38,18 @@ export {
   STUDY_SESSION_IDLE_GRACE_MS,
 }
 
+const ACTIVITY_EVENT_NAMES = ['pointerdown', 'keydown', 'touchstart'] as const
+const ACTIVITY_WRITE_THROTTLE_MS = 1000
+
+let activityTrackingInstalled = false
+let lastRecordedUserActivityAt = 0
+let visibilityChangeHandler: (() => void) | null = null
+
+// Debounce for localStorage writes
+let modePerformanceFlushTimer: ReturnType<typeof setTimeout> | null = null
+let pendingModePerformanceUpdate: Record<string, { correct: number; wrong: number }> | null = null
+const MODE_PERFORMANCE_FLUSH_INTERVAL_MS = 5000
+
 export async function startSession(
   ctx?: StudySessionContext,
   options?: {
@@ -121,6 +133,46 @@ export function updateStudySessionSnapshot(patch: SessionSnapshotPatch): void {
 export function touchStudySessionActivity(sessionId?: number | null, activeAt = Date.now()): void {
   updateStudySessionSnapshot({ sessionId, activeAt })
 }
+
+export function recordStudySessionUserActivity(activeAt = Date.now()): void {
+  const snapshot = readActiveStudySessionSnapshot()
+  if (!snapshot) return
+  if (
+    activeAt >= lastRecordedUserActivityAt
+    && activeAt - lastRecordedUserActivityAt < ACTIVITY_WRITE_THROTTLE_MS
+  ) return
+  lastRecordedUserActivityAt = activeAt
+  updateStudySessionSnapshot({ sessionId: snapshot.sessionId, activeAt })
+}
+
+export function installStudySessionActivityTracking(): void {
+  if (activityTrackingInstalled || typeof window === 'undefined') return
+  activityTrackingInstalled = true
+
+  ACTIVITY_EVENT_NAMES.forEach(eventName => {
+    window.addEventListener(eventName, () => recordStudySessionUserActivity(), { passive: true })
+  })
+  if (typeof document !== 'undefined') {
+    visibilityChangeHandler = () => {
+      if (document.visibilityState === 'visible') recordStudySessionUserActivity()
+    }
+    document.addEventListener('visibilitychange', visibilityChangeHandler)
+  }
+}
+
+export function cleanupStudySessionTracking(): void {
+  if (!activityTrackingInstalled) return
+  activityTrackingInstalled = false
+  ACTIVITY_EVENT_NAMES.forEach(eventName => {
+    window.removeEventListener(eventName, () => recordStudySessionUserActivity())
+  })
+  if (visibilityChangeHandler && typeof document !== 'undefined') {
+    document.removeEventListener('visibilitychange', visibilityChangeHandler)
+    visibilityChangeHandler = null
+  }
+}
+
+installStudySessionActivityTracking()
 
 export function isStudySessionActive(data: {
   sessionId?: number | null
@@ -378,15 +430,32 @@ export async function logSession(data: {
 
 export function recordModeAnswer(mode: string, correct: boolean) {
   try {
-    const parsed = safeParse(
-      ModePerformanceSchema,
-      JSON.parse(localStorage.getItem('mode_performance') || '{}'),
-    )
-    const stored = parsed.success ? parsed.data : {}
-    if (!stored[mode]) stored[mode] = { correct: 0, wrong: 0 }
-    if (correct) stored[mode].correct += 1
-    else stored[mode].wrong += 1
-    localStorage.setItem('mode_performance', JSON.stringify(stored))
+    // Load current state once
+    if (pendingModePerformanceUpdate === null) {
+      const parsed = safeParse(
+        ModePerformanceSchema,
+        JSON.parse(localStorage.getItem('mode_performance') || '{}'),
+      )
+      pendingModePerformanceUpdate = parsed.success ? parsed.data : {}
+    }
+
+    if (!pendingModePerformanceUpdate[mode]) {
+      pendingModePerformanceUpdate[mode] = { correct: 0, wrong: 0 }
+    }
+    if (correct) pendingModePerformanceUpdate[mode].correct += 1
+    else pendingModePerformanceUpdate[mode].wrong += 1
+
+    // Debounce the localStorage write
+    if (modePerformanceFlushTimer !== null) {
+      clearTimeout(modePerformanceFlushTimer)
+    }
+    modePerformanceFlushTimer = setTimeout(() => {
+      if (pendingModePerformanceUpdate !== null) {
+        localStorage.setItem('mode_performance', JSON.stringify(pendingModePerformanceUpdate))
+        pendingModePerformanceUpdate = null
+      }
+      modePerformanceFlushTimer = null
+    }, MODE_PERFORMANCE_FLUSH_INTERVAL_MS)
   } catch {
     // Non-critical.
   }

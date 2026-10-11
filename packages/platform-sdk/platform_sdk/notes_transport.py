@@ -139,3 +139,112 @@ def save_word_detail_note(current_user):
         request.get_json() or {},
     )
     return jsonify(payload), status
+
+# ── Journal Entry Routes ──
+
+@notes_bp.route('/journal', methods=['GET'])
+@token_required
+def list_journal_entries(current_user):
+    from datetime import datetime
+
+    from models import UserJournalNote
+
+    per_page = request.args.get('per_page', 10, type=int)
+    before_id = request.args.get('before_id', type=int)
+    start_date = request.args.get('start_date', '').strip() or None
+    end_date = request.args.get('end_date', '').strip() or None
+
+    query = UserJournalNote.query.filter_by(user_id=current_user.id)
+
+    if start_date:
+        query = query.filter(UserJournalNote.date >= start_date)
+    if end_date:
+        query = query.filter(UserJournalNote.date <= end_date)
+    if before_id:
+        query = query.filter(UserJournalNote.id < before_id)
+
+    query = query.order_by(UserJournalNote.id.desc())
+
+    entries = query.limit(per_page + 1).all()
+    has_more = len(entries) > per_page
+    if has_more:
+        entries = entries[:per_page]
+
+    return jsonify({
+        'entries': [e.to_dict() for e in entries],
+        'has_more': has_more,
+    })
+
+
+@notes_bp.route('/journal/today', methods=['GET'])
+@token_required
+def get_today_journal(current_user):
+    from datetime import datetime
+
+    from models import UserJournalNote
+
+    today = datetime.utcnow().strftime('%Y-%m-%d')
+    entry = UserJournalNote.query.filter_by(
+        user_id=current_user.id, date=today
+    ).first()
+
+    return jsonify({
+        'entry': entry.to_dict() if entry else None,
+    })
+
+
+@notes_bp.route('/journal', methods=['POST'])
+@token_required
+def upsert_journal_entry(current_user):
+    from datetime import datetime
+
+    from models import UserJournalNote, db
+
+    body = request.get_json(silent=True) or {}
+    content = (body.get('content') or '').strip()
+
+    if not content:
+        return jsonify({'error': '内容不能为空'}), 400
+
+    today = datetime.utcnow().strftime('%Y-%m-%d')
+    entry = UserJournalNote.query.filter_by(
+        user_id=current_user.id, date=today
+    ).first()
+
+    if entry:
+        entry.content = content
+        entry.updated_at = datetime.utcnow()
+    else:
+        entry = UserJournalNote(
+            user_id=current_user.id,
+            date=today,
+            content=content,
+        )
+        db.session.add(entry)
+
+    db.session.commit()
+
+    return jsonify({
+        'entry': entry.to_dict(),
+    })
+
+
+@notes_bp.route('/journal/polish', methods=['POST'])
+@token_required
+def polish_journal_entry(current_user):
+    from services.journal_polish_service import JournalPolishUnavailable, polish_text
+
+    body = request.get_json(silent=True) or {}
+    content = (body.get('content') or '').strip()
+
+    if not content:
+        return jsonify({'error': '内容不能为空'}), 400
+
+    try:
+        polished = polish_text(content)
+    except JournalPolishUnavailable as exc:
+        return jsonify({'error': str(exc)}), 503
+
+    return jsonify({
+        'polished': polished,
+    })

@@ -242,6 +242,10 @@ def test_feature_wish_image_upload_creates_resized_oss_variants(monkeypatch, tmp
         'platform_sdk.feature_wish_image_storage.put_object_bytes',
         fake_put_object_bytes,
     )
+    monkeypatch.setattr(
+        'platform_sdk.storage.aliyun_oss.sign_object_url',
+        lambda **_: '',
+    )
 
     response = client.post(
         '/api/feature-wishes',
@@ -267,6 +271,50 @@ def test_feature_wish_image_upload_creates_resized_oss_variants(monkeypatch, tmp
     assert any('/thumb-' in item[0] for item in uploaded)
     assert any('/full-' in item[0] for item in uploaded)
     assert too_many.status_code == 400
+
+
+def test_feature_wish_image_urls_are_resigned_on_read(monkeypatch, tmp_path):
+    _configure_admin_env(monkeypatch, tmp_path)
+    module = _load_admin_ops_service_module('admin_ops_service_feature_wish_resigned_images')
+    client = TestClient(module.app)
+    users = _seed_users(module.admin_ops_flask_app)
+    learner_headers = _auth_headers(_access_token(module.admin_ops_flask_app, users['learner']))
+
+    def fake_put_object_bytes(*, object_key, body, content_type, **kwargs):
+        return type('Stored', (), {
+            'provider': 'aliyun-oss',
+            'bucket_name': 'test-bucket',
+            'object_key': object_key,
+            'byte_length': len(body),
+            'content_type': content_type,
+            'cache_key': f'oss:{object_key}',
+            'signed_url': f'https://expired.example.com/{object_key}',
+        })()
+
+    monkeypatch.setattr(
+        'platform_sdk.feature_wish_image_storage.put_object_bytes',
+        fake_put_object_bytes,
+    )
+
+    response = client.post(
+        '/api/feature-wishes',
+        headers=learner_headers,
+        data={'title': '截图过期', 'content': '旧签名不应该直接返回'},
+        files=[('images', ('wish.png', _png_bytes(), 'image/png'))],
+    )
+    assert response.status_code == 201
+
+    monkeypatch.setattr(
+        'platform_sdk.storage.aliyun_oss.sign_object_url',
+        lambda *, object_key, **_: f'https://fresh.example.com/{object_key}',
+    )
+
+    wish_list = client.get('/api/feature-wishes', headers=learner_headers)
+
+    assert wish_list.status_code == 200
+    image = wish_list.json()['items'][0]['images'][0]
+    assert image['thumbnail_url'].startswith('https://fresh.example.com/')
+    assert image['full_url'].startswith('https://fresh.example.com/')
 
 
 def test_feature_wish_image_upload_failure_does_not_leave_empty_card(monkeypatch, tmp_path):

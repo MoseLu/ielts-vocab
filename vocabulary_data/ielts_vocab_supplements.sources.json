@@ -1,0 +1,110 @@
+{
+  "generated_at": "2026-05-31T23:42:11.085065+00:00",
+  "outputs": [
+    "vocabulary_data/ielts_9400_extended.json",
+    "vocabulary_data/ielts_vocabulary_awl_extended.json"
+  ],
+  "awl": {
+    "base_words": 715,
+    "total_words": 3123
+  },
+  "extended": {
+    "base_words": 9248,
+    "added_words": 787,
+    "total_words": 10035,
+    "total_chapters": 101,
+    "unique_terms_added_by_source": {
+      "local:ielts_vocabulary_complete.json": 232,
+      "web:eap_gsl": 54,
+      "web:vocabularyforielts_top2500": 228,
+      "web:ieltsfreetests_topics": 273
+    }
+  },
+  "sources": [
+    {
+      "id": "ielts_guidance",
+      "url": "https://ielts.org/news-and-insights/how-to-address-vocabulary-in-an-ielts-preparation-course",
+      "purpose": "scope guidance"
+    },
+    {
+      "url": "https://www.eapfoundation.com/vocab/academic/awllists/",
+      "sha256": "e7bcfe124038a34a2b55ff1fdedcc74d54224c6b85541b4dab1c2e53d90c79f0"
+    },
+    {
+      "url": "https://www.eapfoundation.com/vocab/general/gsl/alphabetical/",
+      "sha256": "66f71b6862039d1c78708eba57c7c939a61595420071e54206651a1f62a5855c"
+    },
+    {
+      "url": "https://vocabularyforielts.com/ielts-listening-reading-vocabulary-word-list/",
+      "sha256": "ea6009eb54f4d19fec25066f4baebc9a60e12b8d1affdce30004659f6de5f196"
+    },
+    {
+      "url": "https://www.ieltsfreetests.com/ielts-vocabulary",
+      "sha256": "a1e84eb07eaa46883fc0af9fab3a1aed47e0bdb32aa66b3b5e2336e4edb9067a"
+    },
+    {
+      "url": "https://www.ieltsfreetests.com/ielts-vocabulary/band-7-collocations-for-speaking",
+      "sha256": "bb2db24d1d2b4d4ac0b48dcf396ee8b8ec4e9334689ad51c55b7a4cacf545fd3"
+    },
+    {
+      "url": "https://www.ieltsfreetests.com/ielts-vocabulary/crime-and-justice",
+      "sha256": "49aacb46f6f59faca6920132a8f1a6ad87352f82fe405461e8c3281830310542"
+    },
+    {
+      "url": "https://www.ieltsfreetests.com/ielts-vocabulary/education-and-learning",
+      "sha256": "ec3cf01e6a872fcc1c0686125e3ac3b232b395989026d3b1b74d8a6b2e67f895"
+    },
+    {
+      "url": "https://www.ieltsfreetests.com/ielts-vocabulary/environment-and-climate-change",
+      "sha256": "e2d95a64671c970d270aa6b50a38c910a86e27786debadbe6b4a9164bbfc1948"
+    },
+    {
+      "url": "https://www.ieltsfreetests.com/ielts-vocabulary/family-and-society",
+      "sha256": "3ac4934446879117d2f5d86e29d63d99b1795627f71bdd4314b6add10bd28f60"
+    },
+    {
+      "url": "https://www.ieltsfreetests.com/ielts-vocabulary/food-and-diet",
+      "sha256": "f3aa9a8eebbe3b46dade6047f4c9dbac6e493a197c90d6737911ecaf62855113"
+    },
+    {
+      "url": "https://www.ieltsfreetests.com/ielts-vocabulary/globalisation",
+      "sha256": "b401053d82bc90775255722b3c247554e0d16b2b31a945a737346767c626a2f4"
+    },
+    {
+      "url": "https://www.ieltsfreetests.com/ielts-vocabulary/government-and-politics",
+      "sha256": "fbed617c297785326744426eda804366d19219171cfc29a805e4baadef355e72"
+    },
+    {
+      "url": "https://www.ieltsfreetests.com/ielts-vocabulary/health-and-lifestyle",
+      "sha256": "3f4145ac136670537ebeb92361feac77f68ce9bfbf262c6169eeebf6811ccf39"
+    },
+    {
+      "url": "https://www.ieltsfreetests.com/ielts-vocabulary/linking-words-for-writing-task-2",
+      "sha256": "4e44e9a051e72acf8caca39e79cddf92d21d6be06b3a8f3d2f89ea1b2e9b7587"
+    },
+    {
+      "url": "https://www.ieltsfreetests.com/ielts-vocabulary/media-and-advertising",
+      "sha256": "74dc764608b646e492d8d99052f61054e6bce785c90d107dbb25436cbc192a4b"
+    },
+    {
+      "url": "https://www.ieltsfreetests.com/ielts-vocabulary/money-and-finance",
+      "sha256": "6d9bcaf9a446565c69e8705c7d99ee195a22039f2702fcb10a266d79c48c1d78"
+    },
+    {
+      "url": "https://www.ieltsfreetests.com/ielts-vocabulary/phrasal-verbs-for-ielts-speaking",
+      "sha256": "75383c359dbfad2b6f2bc43e581f7cfa160cefffcf37c04af45167f5463dd167"
+    },
+    {
+      "url": "https://www.ieltsfreetests.com/ielts-vocabulary/technology-and-internet",
+      "sha256": "40c08af81bdc834e6b2d0f19fa4e70f60708eec23bb22162542297ae63324f1d"
+    },
+    {
+      "url": "https://www.ieltsfreetests.com/ielts-vocabulary/travel-and-tourism",
+      "sha256": "27bcbcb0e49e7bb684268395ff72e19e7227d3c042b42d498d20696bddbad2ad"
+    },
+    {
+      "url": "https://www.ieltsfreetests.com/ielts-vocabulary/work-and-careers",
+      "sha256": "e5fee915b1b8d2f29721bff32d9ccc149ee0ebf375bbf2cdedf34f9cd85b2ca9"
+    }
+  ]
+}

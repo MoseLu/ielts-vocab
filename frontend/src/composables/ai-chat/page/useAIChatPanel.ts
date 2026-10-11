@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useAIChat } from '../../../hooks/useAIChat'
-import { useSpeechRecognition } from '../../../hooks/useSpeechRecognition'
+import { useAIChat } from '../../../hooks'
+import { useSpeechRecognition } from '../../../hooks'
 import { useSpeechWaveform } from './useSpeechWaveform'
 
 export const QUICK_ACTIONS: Array<{ label: string; value: string; autoSend: boolean }> = [

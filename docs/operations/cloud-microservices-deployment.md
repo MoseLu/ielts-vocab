@@ -39,6 +39,7 @@ Copy production secret values into `/etc/ielts-vocab/backend.env`. It must inclu
 ```bash
 COOKIE_SECURE=true
 CORS_ORIGINS=https://axiomaticworld.com,https://www.axiomaticworld.com
+PUBLIC_WEB_ORIGINS=https://axiomaticworld.com,https://www.axiomaticworld.com
 TRUST_PROXY_HEADERS=true
 PROXY_FIX_X_FOR=1
 PROXY_FIX_X_PROTO=1

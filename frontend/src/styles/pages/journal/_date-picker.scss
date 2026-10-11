@@ -1,0 +1,358 @@
+.journal-date-picker {
+  position: relative;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.journal-date-range-field {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  min-height: var(--size-40);
+  padding: 0 var(--size-10);
+  border: var(--size-1) solid var(--border-subtle);
+  border-radius: var(--size-6);
+  background: var(--surface-base);
+  transition:
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    background var(--transition-fast);
+}
+
+.journal-date-range-field:hover,
+.journal-date-range-field[aria-expanded='true'] {
+  border-color: color-mix(in srgb, var(--accent) var(--mix-65), var(--border));
+}
+
+.journal-date-range-field:focus-within,
+.journal-date-range-field[aria-expanded='true'] {
+  box-shadow: 0 0 0 var(--size-2) color-mix(in srgb, var(--accent) var(--mix-12), transparent);
+}
+
+.journal-date-range-segment {
+  position: relative;
+  flex: 0 1 var(--size-180);
+  min-width: var(--size-160);
+  gap: var(--size-8);
+  padding: 0 var(--size-4);
+}
+
+.journal-date-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 var(--size-16);
+  width: var(--size-16);
+  height: var(--size-16);
+  color: var(--text-tertiary);
+  pointer-events: none;
+}
+
+.journal-date-icon svg {
+  width: var(--size-16);
+  height: var(--size-16);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+}
+
+.journal-date-range-separator {
+  flex: 0 0 var(--size-28);
+  color: var(--text-secondary);
+  font-size: var(--size-13);
+  font-weight: 600;
+  line-height: 1;
+  text-align: center;
+}
+
+.journal-date-input {
+  width: 100%;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: var(--size-38);
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--size-14);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+  appearance: none;
+  outline: none;
+  box-shadow: none;
+}
+
+.journal-date-input[readonly] {
+  cursor: pointer;
+}
+
+.journal-date-popover {
+  position: absolute;
+  top: calc(100% + var(--size-12));
+  right: 0;
+  z-index: var(--layer-dropdown);
+  display: grid;
+  grid-template-columns: var(--size-112) minmax(var(--size-560), var(--size-640));
+  max-width: calc(100vw - var(--size-48));
+  overflow: hidden;
+  border: var(--size-1) solid var(--border-subtle);
+  border-radius: var(--size-6);
+  background: var(--surface-base);
+  box-shadow: var(--shadow-xl);
+}
+
+.journal-date-popover::before {
+  content: '';
+  position: absolute;
+  top: calc(-1 * var(--size-6));
+  right: var(--size-210);
+  width: var(--size-10);
+  height: var(--size-10);
+  border-top: var(--size-1) solid var(--border-subtle);
+  border-left: var(--size-1) solid var(--border-subtle);
+  background: var(--surface-base);
+  transform: rotate(45deg);
+}
+
+.journal-date-shortcuts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--size-4);
+  padding: var(--size-12) var(--size-10);
+  border-right: var(--size-1) solid var(--border-subtle);
+  background: color-mix(in srgb, var(--surface-base) var(--mix-96), var(--surface-muted));
+}
+
+.journal-date-shortcuts button,
+.journal-date-actions button,
+.journal-date-calendar__header button,
+.journal-date-days button {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+}
+
+.journal-date-shortcuts button {
+  min-height: var(--size-30);
+  padding: 0 var(--size-4);
+  border-radius: var(--size-6);
+  color: var(--text-secondary);
+  font-size: var(--size-14);
+  text-align: left;
+  cursor: pointer;
+}
+
+.journal-date-shortcuts button:hover {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) var(--mix-8), transparent);
+}
+
+.journal-date-panel {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.journal-date-panel-inputs {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--size-24) minmax(0, 1fr);
+  align-items: center;
+  gap: var(--size-10);
+  padding: var(--size-12) var(--size-12);
+  border-bottom: var(--size-1) solid var(--border-subtle);
+}
+
+.journal-date-panel-inputs input {
+  min-height: var(--size-30);
+  padding: 0 var(--size-10);
+  border: var(--size-1) solid var(--border-subtle);
+  border-radius: var(--size-4);
+  background: var(--surface-base);
+  color: var(--text-primary);
+  font-size: var(--size-13);
+  outline: none;
+}
+
+.journal-date-panel-inputs input:focus {
+  border-color: color-mix(in srgb, var(--accent) var(--mix-58), var(--border));
+}
+
+.journal-date-panel-inputs span {
+  color: var(--text-tertiary);
+  text-align: center;
+}
+
+.journal-date-calendars {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.journal-date-calendar {
+  min-width: 0;
+  padding: var(--size-18) var(--size-16) var(--size-16);
+}
+
+.journal-date-calendar + .journal-date-calendar {
+  border-left: var(--size-1) solid var(--border-subtle);
+}
+
+.journal-date-calendar__header {
+  display: grid;
+  grid-template-columns: var(--size-28) 1fr var(--size-28);
+  align-items: center;
+  min-height: var(--size-30);
+  margin-bottom: var(--size-12);
+  color: var(--text-primary);
+}
+
+.journal-date-calendar__header strong {
+  grid-column: 2;
+  font-size: var(--size-16);
+  font-weight: 700;
+  text-align: center;
+}
+
+.journal-date-calendar__header button {
+  color: var(--text-secondary);
+  font-size: var(--size-22);
+  cursor: pointer;
+}
+
+.journal-date-calendar__header button:first-child {
+  grid-column: 1;
+}
+
+.journal-date-calendar__header button:last-child {
+  grid-column: 3;
+}
+
+.journal-date-weekdays,
+.journal-date-days {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(var(--size-28), 1fr));
+  text-align: center;
+}
+
+.journal-date-weekdays span {
+  min-height: var(--size-30);
+  color: var(--text-tertiary);
+  font-size: var(--size-13);
+}
+
+.journal-date-days button {
+  position: relative;
+  min-height: var(--size-36);
+  border-radius: var(--size-18);
+  color: var(--text-secondary);
+  font-size: var(--size-13);
+  cursor: pointer;
+}
+
+.journal-date-days button:hover:not(:disabled) {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) var(--mix-8), transparent);
+}
+
+.journal-date-days button.is-outside {
+  color: var(--text-disabled);
+}
+
+.journal-date-days button.is-in-range {
+  border-radius: 0;
+  background: color-mix(in srgb, var(--accent) var(--mix-10), transparent);
+  color: var(--accent);
+}
+
+.journal-date-days button.is-selected {
+  background: var(--accent);
+  color: var(--text-inverse);
+}
+
+.journal-date-days button:disabled {
+  color: var(--text-disabled);
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.journal-date-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--size-8);
+  padding: var(--size-10) var(--size-14);
+  border-top: var(--size-1) solid var(--border-subtle);
+}
+
+.journal-date-actions button {
+  min-height: var(--size-28);
+  padding: 0 var(--size-12);
+  border-radius: var(--size-4);
+  color: var(--text-secondary);
+  font-size: var(--size-13);
+  cursor: pointer;
+}
+
+.journal-date-actions button:hover {
+  color: var(--accent);
+}
+
+.journal-date-actions__primary {
+  border: var(--size-1) solid var(--border-subtle) !important;
+  color: var(--accent) !important;
+}
+
+@media (max-width: 720px) {
+  .journal-date-picker {
+    width: 100%;
+  }
+
+  .journal-date-range-field {
+    width: 100%;
+  }
+
+  .journal-date-range-segment {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  .journal-date-popover {
+    left: 0;
+    right: auto;
+    grid-template-columns: 1fr;
+    width: min(100%, calc(100vw - var(--size-32)));
+  }
+
+  .journal-date-popover::before {
+    right: auto;
+    left: var(--size-40);
+  }
+
+  .journal-date-shortcuts {
+    flex-direction: row;
+    overflow-x: auto;
+    border-right: 0;
+    border-bottom: var(--size-1) solid var(--border-subtle);
+  }
+
+  .journal-date-shortcuts button {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+
+  .journal-date-panel-inputs,
+  .journal-date-calendars {
+    grid-template-columns: 1fr;
+  }
+
+  .journal-date-panel-inputs span {
+    display: none;
+  }
+
+  .journal-date-calendar + .journal-date-calendar {
+    border-left: 0;
+    border-top: var(--size-1) solid var(--border-subtle);
+  }
+}

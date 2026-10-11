@@ -40,3 +40,30 @@ class UserDailySummary(db.Model):
             'content': self.content,
             'generated_at': _iso_utc(self.generated_at),
         }
+
+
+class UserJournalNote(db.Model):
+    """Stores user-created daily journal notes with markdown content."""
+    __tablename__ = 'user_journal_notes'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+    date = db.Column(db.String(10), nullable=False)  # YYYY-MM-DD
+    content = db.Column(db.Text, nullable=False)      # Markdown content
+    polished_content = db.Column(db.Text, nullable=True)  # AI polished version
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    __table_args__ = (
+        db.UniqueConstraint('user_id', 'date', name='unique_user_journal_date'),
+    )
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'date': self.date,
+            'content': self.content,
+            'polished_content': self.polished_content,
+            'created_at': _iso_utc(self.created_at),
+            'updated_at': _iso_utc(self.updated_at),
+        }

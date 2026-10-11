@@ -1,3 +1,6 @@
+import json
+
+
 def _safe_json_parse(raw: str) -> dict | None:
     try:
         return json.loads(raw)

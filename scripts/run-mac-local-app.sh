@@ -86,7 +86,7 @@ write_app_bundle() {
   local label="$1"
   local app_title="雅思词汇${label}"
   local node_path=""
-  local app_root="${IELTS_MAC_LOCAL_APP_DIR:-${root}/logs/runtime/mac-apps}"
+  local app_root="${IELTS_MAC_LOCAL_APP_DIR:-${root}/logs/runtime/mac-app}"
   local app_bundle="${app_root}/雅思词汇${label}.app"
   local contents_dir="${app_bundle}/Contents"
   local macos_dir="${contents_dir}/MacOS"

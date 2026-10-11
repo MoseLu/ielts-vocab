@@ -1,3 +1,5 @@
+import pytest
+
 from services import llm
 from requests.exceptions import ReadTimeout
 
@@ -302,3 +304,45 @@ def test_stream_chat_events_uses_streaming_timeout_tuple(monkeypatch):
 
     assert events == []
     assert seen['timeout'] == (llm.CONNECT_TIMEOUT_SECONDS, max(llm.READ_TIMEOUT_SECONDS, 120))
+
+
+def test_llm_base_direct_import_finds_backend_env(tmp_path, monkeypatch):
+    from services.llm_service.api_client_parts import base
+
+    backend_dir = tmp_path / 'backend'
+    nested_dir = backend_dir / 'services' / 'llm_service' / 'api_client_parts'
+    nested_dir.mkdir(parents=True)
+    env_path = backend_dir / '.env'
+    env_path.write_text('MINIMAX_API_KEY=test-key\n', encoding='utf-8')
+    monkeypatch.delenv('BACKEND_ENV_FILE', raising=False)
+
+    assert base._find_backend_env_file(str(nested_dir / 'base.py')) == str(env_path)
+
+
+def test_journal_polish_service_imports_chat_streaming_and_reports_unavailable(monkeypatch):
+    from services import journal_polish_service
+
+    def failing_chat(*args, **kwargs):
+        raise RuntimeError('provider down')
+
+    monkeypatch.setattr(journal_polish_service, 'chat', failing_chat)
+
+    with pytest.raises(journal_polish_service.JournalPolishUnavailable):
+        journal_polish_service.polish_text('你好，我今天很帅')
+
+
+def test_journal_polish_retries_when_model_returns_original(monkeypatch):
+    from services import journal_polish_service
+
+    responses = [
+        {'text': '你好，我今天很帅'},
+        {'text': '今天感觉自己还挺帅的。'},
+    ]
+
+    def fake_chat(*args, **kwargs):
+        return responses.pop(0)
+
+    monkeypatch.setattr(journal_polish_service, 'chat', fake_chat)
+
+    assert journal_polish_service.polish_text('你好，我今天很帅') == '今天感觉自己还挺帅的。'
+    assert responses == []

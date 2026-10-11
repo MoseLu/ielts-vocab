@@ -1,7 +1,6 @@
 import type { CSSProperties } from 'react'
 import type { GameCampaignNode, GameCampaignWord, GameLevelKind } from '../../../../lib'
 import {
-  LEVEL_KIND_LABELS,
   NODE_STATUS_LABELS,
   NODE_TYPE_LABELS,
   getChallengeStep,

@@ -1,18 +1,9 @@
 import React, { useEffect, useState } from 'react'
-import {
-  BarChart3,
-  BookOpen,
-  Bot,
-  FileText,
-  RefreshCcw,
-  Search,
-  SquarePen,
-  Target,
-  TriangleAlert,
-} from 'lucide-react-native'
 import type { HomeTodoAction } from '@ielts-vocab/app-core'
+import { StyleSheet, View } from 'react-native'
 import { loadHomeTodos, loadLearningStats } from '../api/learnerApi'
 import {
+  StudyPlanPanel,
   StudyRoomScene,
   type StudyRoomObject,
   type StudyRoomTodo,
@@ -77,107 +68,59 @@ function routeTarget(
   return { screen: 'practice' }
 }
 
-function buildRoomObjects(state: HomeState): StudyRoomObject[] {
+function buildRoomObjects(state: HomeState): { heroAction: StudyRoomObject; sideEntries: StudyRoomObject[] } {
   const remainingWords = Math.max(state.totalWords - state.learnedWords, 0)
-  const reviewCount = Math.max(Math.round(remainingWords * 0.08), state.todos.length ? 12 : 0)
-  return [
-    {
-      Icon: BookOpen,
-      ctaLabel: '打开词书',
-      hint: '书架上的词卡会继续沿用当前词书、章节和学习进度。',
-      key: 'word-cards',
-      label: '词卡',
-      screen: 'books',
+  const firstTodo = state.todos[0]
+  const nextTarget = firstTodo
+    ? routeTarget(firstTodo.target_path, firstTodo.action)
+    : { screen: 'practice' as const, options: { mode: 'smart' as const } }
+  const todoCount = state.todos.length
+
+  return {
+    heroAction: {
+      ctaLabel: '继续学习',
+      hint: firstTodo?.subtitle || (remainingWords ? `还剩 ${remainingWords} 个词，先完成一组轻量练习。` : '今天从一组智能练习热身。'),
+      key: 'continue-study',
+      label: firstTodo?.title || '今天继续学习',
+      options: nextTarget.options,
+      screen: nextTarget.screen,
       tone: 'green',
-      value: remainingWords ? `${Math.min(20, remainingWords)} 个新词` : '轻量复盘',
+      value: firstTodo ? firstTodo.cta_label : '智能练习',
     },
-    {
-      Icon: RefreshCcw,
-      ctaLabel: '开始复习',
-      hint: '像点唱机一样先播放今天该复习的词，把记忆重新转起来。',
-      key: 'review-player',
-      label: '复习',
-      options: { mode: 'quickmemory' },
-      screen: 'practice',
-      tone: 'orange',
-      value: `${reviewCount} 词`,
-    },
-    {
-      Icon: SquarePen,
-      ctaLabel: '去练习台',
-      hint: '基础训练、听力、拼写和释义练习都从这里进入。',
-      key: 'practice-desk',
-      label: '练习',
-      options: { mode: 'smart' },
-      screen: 'practice',
-      tone: 'blue',
-      value: '智能出题',
-    },
-    {
-      Icon: TriangleAlert,
-      ctaLabel: '安抚错词',
-      hint: '错词急救箱会优先清理最近反复出错的词。',
-      key: 'wrong-kit',
-      label: '错词',
-      screen: 'errors',
-      tone: 'red',
-      value: `${state.wrongWords} 词`,
-    },
-    {
-      Icon: BarChart3,
-      ctaLabel: '查看数据',
-      hint: '剪贴板会展示体感更轻的学习数据与复习曲线。',
-      key: 'data-board',
-      label: '数据',
-      screen: 'stats',
-      tone: 'green',
-      value: `${state.learnedWords}/${state.totalWords}`,
-    },
-    {
-      Icon: Search,
-      ctaLabel: '全局查词',
-      hint: '百宝箱式入口，适合临时查词、例句和笔记。',
-      key: 'treasure-box',
-      label: '百宝箱',
-      screen: 'search',
-      tone: 'orange',
-      value: '查词/例句',
-    },
-    {
-      Icon: FileText,
-      ctaLabel: '看真题',
-      hint: '挑战赛入口保留活动感，但路由到真题和专项练习。',
-      key: 'challenge',
-      label: '挑战赛',
-      screen: 'exams',
-      tone: 'pink',
-      value: '真题专项',
-    },
-    {
-      Icon: Bot,
-      ctaLabel: '问 AI',
-      hint: '挂信入口会给出弱项建议、例句和下一步练习策略。',
-      key: 'ai-letter',
-      label: 'AI 信件',
-      screen: 'ai',
-      tone: 'purple',
-      value: '3 条建议',
-    },
-    {
-      Icon: Target,
-      ctaLabel: '开始计划',
-      hint: '第一版只做计划展示和入口，不新增真实支付合同。',
-      key: 'pro-plan',
-      label: '冲刺计划',
-      options: { mode: 'smart' },
-      screen: 'practice',
-      tone: 'pink',
-      value: `IELTS ${planPreview.targetScore}`,
-    },
-  ]
+    sideEntries: [
+      {
+        ctaLabel: '进入练习场',
+        hint: '基础训练、复习、听写和跟读都从练习场开始。',
+        key: 'practice-yard',
+        label: '练习场',
+        options: { mode: 'smart' },
+        screen: 'practice',
+        tone: 'blue',
+        value: '智能训练',
+      },
+      {
+        ctaLabel: '清理错词',
+        hint: '集中处理最近反复出错的词。',
+        key: 'wrong-kit',
+        label: '错词',
+        screen: 'errors',
+        tone: 'red',
+        value: `${state.wrongWords} 词`,
+      },
+      {
+        ctaLabel: '查看待办',
+        hint: '查看今日推荐、学习进度和冲刺弱项。',
+        key: 'todo-list',
+        label: '待办',
+        screen: 'homePlan',
+        tone: 'orange',
+        value: todoCount ? `${todoCount} 项` : `IELTS ${planPreview.targetScore}`,
+      },
+    ],
+  }
 }
 
-export function HomeScreen({ navigate }: { navigate: Navigate }) {
+function useHomeState() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [state, setState] = useState<HomeState>({
@@ -218,21 +161,49 @@ export function HomeScreen({ navigate }: { navigate: Navigate }) {
     }
   }, [])
 
-  const progress = state.totalWords > 0 ? Math.min(100, Math.round((state.learnedWords / state.totalWords) * 100)) : 0
-  const remainingWords = Math.max(state.totalWords - state.learnedWords, 0)
-  const roomObjects = buildRoomObjects(state)
-  const todos: StudyRoomTodo[] = state.todos.map(todo => ({
+  return { error, loading, state }
+}
+
+function todoCards(state: HomeState): StudyRoomTodo[] {
+  return state.todos.map(todo => ({
     ctaLabel: todo.cta_label,
     subtitle: todo.subtitle,
     title: todo.title,
   }))
+}
+
+export function HomeScreen({ navigate }: { navigate: Navigate }) {
+  const { error, loading, state } = useHomeState()
+  const { heroAction, sideEntries } = buildRoomObjects(state)
 
   return (
-    <ScreenScroll hideHeader title="雅思冲刺" subtitle="把今日学习入口藏进一间猫咪 IELTS 自习室。">
-      <StatusText error={error} loading={loading} />
+    <View style={styles.homeScreen}>
+      {error || loading ? (
+        <View pointerEvents="none" style={styles.homeStatusOverlay}>
+          <StatusText error={error} loading={loading} />
+        </View>
+      ) : null}
       <StudyRoomScene
-        learnedWords={state.learnedWords}
+        heroAction={heroAction}
         onNavigate={navigate}
+        sideEntries={sideEntries}
+        wrongWords={state.wrongWords}
+      />
+    </View>
+  )
+}
+
+export function HomePlanScreen({ navigate }: { navigate: Navigate }) {
+  const { error, loading, state } = useHomeState()
+  const progress = state.totalWords > 0 ? Math.min(100, Math.round((state.learnedWords / state.totalWords) * 100)) : 0
+  const remainingWords = Math.max(state.totalWords - state.learnedWords, 0)
+
+  return (
+    <ScreenScroll hideHeader title="今日计划">
+      <StatusText error={error} loading={loading} />
+      <StudyPlanPanel
+        learnedWords={state.learnedWords}
+        onStart={() => navigate('practice', { mode: 'smart' })}
         onTodoPress={index => {
           const todo = state.todos[index]
           if (!todo) return
@@ -242,11 +213,23 @@ export function HomeScreen({ navigate }: { navigate: Navigate }) {
         plan={planPreview}
         progress={progress}
         remainingWords={remainingWords}
-        roomObjects={roomObjects}
-        todos={todos}
+        todos={todoCards(state)}
         totalWords={state.totalWords}
-        wrongWords={state.wrongWords}
       />
     </ScreenScroll>
   )
 }
+
+const styles = StyleSheet.create({
+  homeScreen: {
+    backgroundColor: '#FFF2E4',
+    flex: 1,
+  },
+  homeStatusOverlay: {
+    left: 18,
+    position: 'absolute',
+    right: 18,
+    top: 74,
+    zIndex: 20,
+  },
+})

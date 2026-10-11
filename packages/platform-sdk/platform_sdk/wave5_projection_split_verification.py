@@ -28,7 +28,7 @@ from platform_sdk.notes_wrong_word_projection_application import (
     NOTES_WRONG_WORD_CONTEXT_PROJECTION,
 )
 from platform_sdk.runtime_env import load_split_service_env
-from services.storage_boundary_guard import validate_split_service_storage_boundary
+from platform_sdk.storage_boundary_adapter import validate_split_service_storage_boundary
 
 
 BOOTSTRAP_TOPIC = '__bootstrap__'

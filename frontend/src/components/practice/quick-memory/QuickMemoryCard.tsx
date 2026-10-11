@@ -1,4 +1,4 @@
-import type { CSSProperties, ReactNode } from 'react'
+import { useEffect, type CSSProperties, type ReactNode } from 'react'
 import type { QuickMemoryModeVariant } from '../../../features/practice/quickMemorySession'
 import type { Word } from '../types'
 import { QuickMemoryCountdownRing } from './QuickMemoryCountdownRing'
@@ -70,6 +70,18 @@ function SpeakerIcon() {
   )
 }
 
+function isEditableShortcutTarget(target: EventTarget | null) {
+  if (!(target instanceof HTMLElement)) return false
+  const tagName = target.tagName.toLowerCase()
+  return target.isContentEditable || tagName === 'input' || tagName === 'textarea' || tagName === 'select'
+}
+
+function numericShortcutIndex(event: KeyboardEvent) {
+  if (/^[1-3]$/.test(event.key)) return Number(event.key) - 1
+  if (/^(Digit|Numpad)[1-3]$/.test(event.code)) return Number(event.code.at(-1)) - 1
+  return null
+}
+
 export function QuickMemoryCard({
   modeVariant,
   phase,
@@ -95,22 +107,52 @@ export function QuickMemoryCard({
   onNext,
 }: QuickMemoryCardProps) {
   const isTestMode = modeVariant === 'test'
-  const choicesDisabled = isTestMode && !questionReady
+  useEffect(() => {
+    if (!isTestMode || phase !== 'question' || !questionReady) return
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.altKey || event.ctrlKey || event.metaKey || event.repeat) return
+      if (isEditableShortcutTarget(event.target)) return
+
+      const index = numericShortcutIndex(event)
+      if (index == null) return
+      if (index === 0 && !knownChoiceAvailable) return
+
+      event.preventDefault()
+      event.stopPropagation()
+
+      if (index === 0) onKnown()
+      if (index === 1) onFamiliar()
+      if (index === 2) onUnknown()
+    }
+
+    window.addEventListener('keydown', handleKeyDown, true)
+    return () => window.removeEventListener('keydown', handleKeyDown, true)
+  }, [isTestMode, knownChoiceAvailable, onFamiliar, onKnown, onUnknown, phase, questionReady])
+
   const resultLabel = choice === 'known'
     ? '✓ 认识'
     : wasFuzzy && isTestMode
       ? '△ 不熟悉'
       : '✗ 不认识'
-  const keyHints = (
-    <div className="qm-key-hints">
-      {canGoPrev && <span className="qm-key-hint"><kbd>←</kbd> 上一个</span>}
-      {phase === 'question' && (!isTestMode || knownChoiceAvailable) && (
-        <span className="qm-key-hint"><kbd>→</kbd> 认识</span>
-      )}
-      {phase === 'reveal' && <span className="qm-key-hint"><kbd>→</kbd> 下一个</span>}
-      <span className="qm-key-hint">点右上角喇叭或 <kbd>Tab</kbd> 重播发音</span>
-    </div>
-  )
+
+  const keyHints = isTestMode && phase === 'question'
+    ? (
+      <div className="qm-key-hints qm-key-hints--test">
+        {canGoPrev && <span className="qm-key-hint"><kbd>←</kbd> 上一个</span>}
+        <span className="qm-key-hint">点右上角喇叭或 <kbd>Tab</kbd> 重播发音</span>
+      </div>
+    )
+    : (
+      <div className="qm-key-hints">
+        {canGoPrev && <span className="qm-key-hint"><kbd>←</kbd> 上一个</span>}
+        {phase === 'question' && (!isTestMode || (questionReady && knownChoiceAvailable)) && (
+          <span className="qm-key-hint"><kbd>→</kbd> 认识</span>
+        )}
+        {phase === 'reveal' && <span className="qm-key-hint"><kbd>→</kbd> 下一个</span>}
+        <span className="qm-key-hint">点右上角喇叭或 <kbd>Tab</kbd> 重播发音</span>
+      </div>
+    )
 
   return (
     <div className="qm-root">
@@ -134,22 +176,33 @@ export function QuickMemoryCard({
                 ? countdown > 0 && <div className="qm-countdown-ring"><QuickMemoryCountdownRing seconds={countdown} total={totalSeconds} /></div>
                 : <div className="qm-audio-prompt"><SpeakerIcon /></div>}
               <p className="qm-hint">听完发音后判断熟悉度</p>
-              <div className="qm-choice-row">
-                {knownChoiceAvailable && (
-                  <button className="qm-btn qm-btn--known" onClick={onKnown} disabled={choicesDisabled}>
-                    <CheckIcon />
-                    认识
+              {questionReady && (
+                <div className="qm-choice-row">
+                  {knownChoiceAvailable && (
+                    <button type="button" className="qm-btn qm-btn--known" onClick={onKnown}>
+                      <span className="qm-btn-key">快捷键: 1</span>
+                      <span className="qm-btn-label">
+                        <CheckIcon />
+                        认识
+                      </span>
+                    </button>
+                  )}
+                  <button type="button" className="qm-btn qm-btn--familiar" onClick={onFamiliar}>
+                    <span className="qm-btn-key">快捷键: 2</span>
+                    <span className="qm-btn-label">
+                      <CheckIcon />
+                      不熟悉
+                    </span>
                   </button>
-                )}
-                <button className="qm-btn qm-btn--familiar" onClick={onFamiliar} disabled={choicesDisabled}>
-                  <CheckIcon />
-                  不熟悉
-                </button>
-                <button className="qm-btn qm-btn--unknown" onClick={onUnknown} disabled={choicesDisabled}>
-                  <CrossIcon />
-                  不认识
-                </button>
-              </div>
+                  <button type="button" className="qm-btn qm-btn--unknown" onClick={onUnknown}>
+                    <span className="qm-btn-key">快捷键: 3</span>
+                    <span className="qm-btn-label">
+                      <CrossIcon />
+                      不认识
+                    </span>
+                  </button>
+                </div>
+              )}
               {keyHints}
             </>
           )}

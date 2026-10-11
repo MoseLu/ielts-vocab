@@ -1,5 +1,20 @@
+import { useEffect } from 'react'
 import { PageSkeleton } from '../../ui'
 import { useVocabTestPage } from '../../../composables/vocab-test/page/useVocabTestPage'
+
+function isEditableShortcutTarget(target: EventTarget | null) {
+  if (!(target instanceof HTMLElement)) return false
+  const tagName = target.tagName.toLowerCase()
+  return target.isContentEditable || tagName === 'input' || tagName === 'textarea' || tagName === 'select'
+}
+
+function shortcutOptionIndex(event: KeyboardEvent) {
+  if (/^[1-4]$/.test(event.key)) return Number(event.key) - 1
+  if (/^(Digit|Numpad)[1-4]$/.test(event.code)) {
+    return Number(event.code.at(-1)) - 1
+  }
+  return null
+}
 
 function ResultScreen({
   result,
@@ -82,6 +97,26 @@ export default function VocabTestPage() {
     handleOptionSelect,
     replayCurrentQuestion,
   } = useVocabTestPage()
+
+  useEffect(() => {
+    if (loading || error || showResult || !currentQuestion || selected !== null) return
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.altKey || event.ctrlKey || event.metaKey || event.repeat) return
+      if (isEditableShortcutTarget(event.target)) return
+
+      const optionIndex = shortcutOptionIndex(event)
+      if (optionIndex == null) return
+      if (optionIndex >= currentQuestion.options.length) return
+
+      event.preventDefault()
+      event.stopPropagation()
+      handleOptionSelect(optionIndex)
+    }
+
+    window.addEventListener('keydown', handleKeyDown, true)
+    return () => window.removeEventListener('keydown', handleKeyDown, true)
+  }, [currentQuestion, error, handleOptionSelect, loading, selected, showResult])
 
   if (loading) {
     return (

@@ -9,43 +9,28 @@ import { STORAGE_KEYS } from '../../constants'
 export const apiFetchMock = vi.fn()
 export const startSessionMock = vi.fn().mockResolvedValue(null)
 export const fetchMock = vi.fn()
+export const useAIChatMock = vi.fn(() => ({
+  sendMessage: vi.fn(),
+  openPanel: vi.fn(),
+  closePanel: vi.fn(),
+}))
 
 vi.stubGlobal('fetch', fetchMock)
 
-vi.mock('../../hooks/useSpeechRecognition', () => ({
-  useSpeechRecognition: () => ({
+vi.mock('../../hooks', async () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const actual = await vi.importActual<any>('../../hooks')
+  return {
+    ...actual,
+    useAIChat: () => useAIChatMock(),
+    useSpeechRecognition: () => ({
     isConnected: false,
     isRecording: false,
     startRecording: vi.fn(),
     stopRecording: vi.fn(),
-  }),
-}))
-
-vi.mock('../../contexts/AIChatContext', () => ({
-  setGlobalLearningContext: vi.fn(),
-}))
-
-vi.mock('../../lib/smartMode', () => ({
-  loadSmartStats: vi.fn(() => ({})),
-  recordWordResult: vi.fn(),
-  chooseSmartDimension: vi.fn(() => 'meaning'),
-  buildSmartQueue: vi.fn(() => []),
-  syncSmartStatsToBackend: vi.fn(),
-  loadSmartStatsFromBackend: vi.fn(),
-}))
-
-vi.mock('../../hooks/useAIChat', () => ({
-  PASSIVE_STUDY_SESSION_MIN_SECONDS: 30,
-  recordModeAnswer: vi.fn(),
-  resolveStudySessionDurationSeconds: (data: { startedAt: number; endedAt?: number; durationSeconds?: number }) =>
-    data.durationSeconds ?? Math.max(0, Math.round(((data.endedAt ?? Date.now()) - data.startedAt) / 1000)),
-  logSession: vi.fn(),
-  startSession: (...args: unknown[]) => startSessionMock(...args),
-  cancelSession: vi.fn(),
-  flushStudySessionOnPageHide: vi.fn(),
-  touchStudySessionActivity: vi.fn(),
-  updateStudySessionSnapshot: vi.fn(),
-}))
+  })
+  }
+})
 
 vi.mock('../../lib', async () => {
   const actual = await vi.importActual<typeof import('../../lib')>('../../lib')

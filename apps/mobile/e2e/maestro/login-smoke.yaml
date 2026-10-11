@@ -1,0 +1,13 @@
+appId: com.axiomaticworld.ieltsvocab
+---
+- runFlow: _login.yaml
+- assertVisible:
+    id: tab.home
+- assertVisible:
+    id: tab.books
+- assertVisible:
+    id: tab.practice
+- assertVisible:
+    id: tab.stats
+- assertVisible:
+    id: tab.profile

@@ -1,0 +1,22 @@
+{
+  "schema_version": "axi-rules.frontend-test-contract.v1",
+  "project": "ielts-vocab",
+  "surfaces": [
+    {
+      "id": "ielts-frontend",
+      "path": "frontend",
+      "framework": "react-vite",
+      "runtime": "browser",
+      "risk_tier": "A",
+      "test_runner": "vitest-playwright",
+      "commands": {"typecheck": "pnpm --dir frontend exec tsc --noEmit", "lint": "pnpm --dir frontend lint", "test": "pnpm --dir frontend test", "coverage": "pnpm --dir frontend test:coverage", "build": "pnpm --dir frontend build", "e2e": "pnpm --dir frontend test:e2e"},
+      "required_layers": ["L0", "L1", "L2", "L3"],
+      "critical_flows": ["authentication", "vocabulary practice", "books and settings", "AI chat", "admin workflow"],
+      "critical_flow_tests": {"authentication": ["tests/e2e/**/*.spec.ts", "src/lib/apiClient/authRefresh.test.ts"], "vocabulary practice": ["tests/e2e/practice.spec.ts", "src/lib/gamePractice.test.ts"], "books and settings": ["tests/e2e/settings.spec.ts", "src/lib/appSettings.test.ts"], "AI chat": ["tests/e2e/ai-chat.spec.ts", "src/lib/aiMarkdown.test.ts"], "admin workflow": ["tests/e2e/admin.spec.ts"]},
+      "test_globs": ["src/**/*.test.ts", "src/**/*.test.tsx"],
+      "e2e_globs": ["tests/e2e/**/*.spec.ts"],
+      "coverage": {"lines": 80, "branches": 70},
+      "known_exceptions": [{"id": "ielts-coverage-floor", "status": "accepted", "reason": "The current project gate is an existing measured floor below the default Tier A baseline; the contract keeps the difference explicit instead of hiding it with exclusions.", "next_action": "Raise the enforced lines and branches floors after the next coverage baseline review."}]
+    }
+  ]
+}

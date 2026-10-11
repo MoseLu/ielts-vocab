@@ -36,7 +36,7 @@ done
 setup_script="${root}/scripts/setup-mac-runtime.sh"
 backend_env="${root}/backend/.env"
 microservices_env="${root}/backend/.env.microservices.local"
-runtime_dir="${root}/logs/runtime/microservices-mac"
+runtime_dir="${root}/logs/runtime/app-services-mac"
 postgres_script="${root}/scripts/start-local-postgres-microservices.sh"
 redis_script="${root}/scripts/start-local-redis-microservices.sh"
 rabbit_script="${root}/scripts/start-local-rabbitmq-microservices.sh"
@@ -44,17 +44,34 @@ rabbit_script="${root}/scripts/start-local-rabbitmq-microservices.sh"
 PATH="${runtime_prefix}/bin:${PATH}"
 export PATH
 
+port_base="${PORT:?workspace port lease is required}"
+port_for() { printf '%s' "$((port_base + $1))"; }
+gateway_port="$(port_for 0)"
+identity_port="$(port_for 1)"
+learning_port="$(port_for 2)"
+catalog_port="$(port_for 3)"
+ai_execution_port="$(port_for 4)"
+tts_port="$(port_for 5)"
+asr_http_port="$(port_for 6)"
+notes_port="$(port_for 7)"
+admin_port="$(port_for 8)"
+asr_socketio_port="$(port_for 9)"
+export GATEWAY_BFF_PORT="$gateway_port" IDENTITY_SERVICE_PORT="$identity_port" LEARNING_CORE_SERVICE_PORT="$learning_port"
+export CATALOG_CONTENT_SERVICE_PORT="$catalog_port" AI_EXECUTION_SERVICE_PORT="$ai_execution_port" TTS_MEDIA_SERVICE_PORT="$tts_port"
+export ASR_SERVICE_PORT="$asr_http_port" NOTES_SERVICE_PORT="$notes_port" ADMIN_OPS_SERVICE_PORT="$admin_port"
+export SPEECH_SERVICE_PORT="$asr_socketio_port"
+
 service_defs=(
-  "gateway-bff|8000|apps/gateway-bff|python -u ${root}/apps/gateway-bff/main.py|http://127.0.0.1:8000/health"
-  "identity-service|8101|services/identity-service|python -u ${root}/services/identity-service/main.py|http://127.0.0.1:8101/ready"
-  "learning-core-service|8102|services/learning-core-service|python -u ${root}/services/learning-core-service/main.py|http://127.0.0.1:8102/ready"
-  "catalog-content-service|8103|services/catalog-content-service|python -u ${root}/services/catalog-content-service/main.py|http://127.0.0.1:8103/ready"
-  "ai-execution-service|8104|services/ai-execution-service|python -u ${root}/services/ai-execution-service/main.py|http://127.0.0.1:8104/ready"
-  "tts-media-service|8105|services/tts-media-service|python -u ${root}/services/tts-media-service/main.py|http://127.0.0.1:8105/ready"
-  "asr-service|8106|services/asr-service|python -u ${root}/services/asr-service/main.py|http://127.0.0.1:8106/ready"
-  "notes-service|8107|services/notes-service|python -u ${root}/services/notes-service/main.py|http://127.0.0.1:8107/ready"
-  "admin-ops-service|8108|services/admin-ops-service|python -u ${root}/services/admin-ops-service/main.py|http://127.0.0.1:8108/ready"
-  "asr-socketio|5001|services/asr-service|python -u ${root}/services/asr-service/socketio_main.py|http://127.0.0.1:5001/ready"
+  "gateway-bff|${gateway_port}|apps/gateway-bff|python -u ${root}/apps/gateway-bff/main.py|http://127.0.0.1:${gateway_port}/health"
+  "identity-service|${identity_port}|services/identity-service|python -u ${root}/services/identity-service/main.py|http://127.0.0.1:${identity_port}/ready"
+  "learning-core-service|${learning_port}|services/learning-core-service|python -u ${root}/services/learning-core-service/main.py|http://127.0.0.1:${learning_port}/ready"
+  "catalog-content-service|${catalog_port}|services/catalog-content-service|python -u ${root}/services/catalog-content-service/main.py|http://127.0.0.1:${catalog_port}/ready"
+  "ai-execution-service|${ai_execution_port}|services/ai-execution-service|python -u ${root}/services/ai-execution-service/main.py|http://127.0.0.1:${ai_execution_port}/ready"
+  "tts-media-service|${tts_port}|services/tts-media-service|python -u ${root}/services/tts-media-service/main.py|http://127.0.0.1:${tts_port}/ready"
+  "asr-service|${asr_http_port}|services/asr-service|python -u ${root}/services/asr-service/main.py|http://127.0.0.1:${asr_http_port}/ready"
+  "notes-service|${notes_port}|services/notes-service|python -u ${root}/services/notes-service/main.py|http://127.0.0.1:${notes_port}/ready"
+  "admin-ops-service|${admin_port}|services/admin-ops-service|python -u ${root}/services/admin-ops-service/main.py|http://127.0.0.1:${admin_port}/ready"
+  "asr-socketio|${asr_socketio_port}|services/asr-service|python -u ${root}/services/asr-service/socketio_main.py|http://127.0.0.1:${asr_socketio_port}/ready"
 )
 worker_defs=(
   "core-eventing-worker|services/identity-service|python -u ${root}/services/identity-service/eventing_worker.py"
@@ -82,7 +99,7 @@ replaced_worker_names=(
 )
 
 log() {
-  printf '[microservices-mac] %s\n' "$1"
+  printf '[app-services-mac] %s\n' "$1"
 }
 
 require_command() {
@@ -94,7 +111,7 @@ require_command() {
 
 ensure_runtime() {
   if [[ ! -x "${runtime_prefix}/bin/python" ]]; then
-    "${setup_script}"
+    bash "${setup_script}"
   fi
   PATH="${runtime_prefix}/bin:${PATH}"
   export PATH
@@ -153,6 +170,17 @@ start_logged_process() {
   local stderr_log="${runtime_dir}/${name}.err.log"
   local pidfile="${runtime_dir}/${name}.pid"
 
+  # PRD-07 phase 2: rotate any prior logs over 50 MB before
+  # truncating. Keeps the file size bounded so Promtail can
+  # ingest the tail without paying the full history on every
+  # restart.
+  for log in "${stdout_log}" "${stderr_log}"; do
+    if [[ -f "${log}" ]] && (( $(stat -f%z "${log}" 2>/dev/null || echo 0) > 52428800 )); then
+      mv "${log}" "${log}.$(date +%Y%m%d-%H%M%S).rotated"
+      gzip -f "${log}."*.rotated 2>/dev/null || true
+    fi
+  done
+
   : > "${stdout_log}"
   : > "${stderr_log}"
   (
@@ -172,12 +200,12 @@ mkdir -p "${runtime_dir}"
 [[ -f "${backend_env}" ]] || { printf '[ERROR] Missing backend env file: %s\n' "${backend_env}" >&2; exit 1; }
 [[ -f "${microservices_env}" ]] || { printf '[ERROR] Missing microservices env file: %s\n' "${microservices_env}" >&2; exit 1; }
 
-"${postgres_script}" "${root}"
+bash "${postgres_script}" "${root}"
 if [[ "${skip_redis}" != "true" ]]; then
-  "${redis_script}" "${root}"
+  bash "${redis_script}" "${root}"
 fi
 if [[ "${skip_rabbit}" != "true" ]]; then
-  "${rabbit_script}" "${root}"
+  bash "${rabbit_script}" "${root}"
 fi
 
 python "${root}/scripts/run-service-schema-migrations.py" --env-file "${microservices_env}"
@@ -206,19 +234,19 @@ for definition in "${worker_defs[@]}"; do
 done
 
 if [[ "${skip_frontend_checks}" != "true" ]]; then
-  log 'Gateway ready at http://127.0.0.1:8000'
+  log "Gateway ready at http://127.0.0.1:${gateway_port}"
 fi
 log 'Microservice backend started successfully.'
-printf '       Gateway:           http://127.0.0.1:8000\n'
-printf '       Identity:          http://127.0.0.1:8101\n'
-printf '       Learning core:     http://127.0.0.1:8102\n'
-printf '       Catalog content:   http://127.0.0.1:8103\n'
-printf '       AI execution:      http://127.0.0.1:8104\n'
-printf '       TTS media:         http://127.0.0.1:8105\n'
-printf '       ASR HTTP:          http://127.0.0.1:8106\n'
-printf '       Notes:             http://127.0.0.1:8107\n'
-printf '       Admin ops:         http://127.0.0.1:8108\n'
-printf '       ASR Socket.IO:     http://127.0.0.1:5001\n'
+printf '       Gateway:           http://127.0.0.1:%s\n' "${gateway_port}"
+printf '       Identity:          http://127.0.0.1:%s\n' "${identity_port}"
+printf '       Learning core:     http://127.0.0.1:%s\n' "${learning_port}"
+printf '       Catalog content:   http://127.0.0.1:%s\n' "${catalog_port}"
+printf '       AI execution:      http://127.0.0.1:%s\n' "${ai_execution_port}"
+printf '       TTS media:         http://127.0.0.1:%s\n' "${tts_port}"
+printf '       ASR HTTP:          http://127.0.0.1:%s\n' "${asr_http_port}"
+printf '       Notes:             http://127.0.0.1:%s\n' "${notes_port}"
+printf '       Admin ops:         http://127.0.0.1:%s\n' "${admin_port}"
+printf '       ASR Socket.IO:     http://127.0.0.1:%s\n' "${asr_socketio_port}"
 printf '       Core worker:       core-eventing-worker\n'
 printf '       Notes worker:      notes-domain-worker\n'
 printf '       AI worker:         ai-execution-domain-worker\n'

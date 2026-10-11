@@ -1,0 +1,36 @@
+appId: com.axiomaticworld.ieltsvocab
+---
+- runFlow: _login.yaml
+- tapOn:
+    id: tab.stats
+- extendedWaitUntil:
+    visible:
+      id: screen.stats
+    timeout: 10000
+- assertVisible: 学习概览
+- tapOn:
+    id: header.ai
+- extendedWaitUntil:
+    visible:
+      id: ai.prompt
+    timeout: 10000
+- assertVisible:
+    id: ai.send
+- pressKey: Back
+- tapOn:
+    id: tab.home
+- tapOn:
+    id: home.object.todo-list
+- extendedWaitUntil:
+    visible:
+      id: screen.homePlan
+    timeout: 10000
+- pressKey: Back
+- tapOn:
+    id: tab.profile
+- tapOn: 记录
+- extendedWaitUntil:
+    visible:
+      id: screen.journal
+    timeout: 10000
+- assertVisible: 生成今日总结

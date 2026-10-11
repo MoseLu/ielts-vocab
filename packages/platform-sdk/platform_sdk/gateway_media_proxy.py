@@ -1,3 +1,22 @@
+"""Backward-compatible public surface for the gateway media proxy helpers.
+
+Historically this file was a single 500+ line module. It is now a thin
+wrapper that re-exports the public API while the actual implementation
+lives in three smaller submodules:
+
+* ``_helpers`` — small URL / validation / canonical-identity helpers
+* ``_resolution`` — word audio request and candidate resolution
+* ``_proxy`` — HTTP upstream proxy core, fetch wrappers, response builders
+
+The split keeps ``from platform_sdk.gateway_media_proxy import X``
+working for every public name and preserves test monkeypatching on
+this module for ``azure_default_model``, ``azure_word_voice``,
+``word_tts_cache_path``, ``resolve_normal_word_audio_identity``,
+``phonetic_identity``, and ``httpx``: the wrapper owns those names and
+the implementation submodules read them dynamically through the
+wrapper at call time.
+"""
+
 from __future__ import annotations
 
 import os
@@ -5,496 +24,95 @@ import sys
 from pathlib import Path
 
 import httpx
-from fastapi import HTTPException, Response
-from fastapi.responses import JSONResponse
 
-from platform_sdk.gateway_upstream import (
-    GatewayCircuitOpenError,
-    before_gateway_upstream_attempt,
-    record_gateway_upstream_failure,
-    record_gateway_upstream_success,
-    resolve_gateway_upstream_policy,
-    should_retry_gateway_upstream,
+from platform_sdk import word_audio_phonetic_identity as phonetic_identity
+from platform_sdk.word_tts_runtime_adapter import (
+    normalize_word_key as _normalize_word_key,
+    word_tts_cache_path,
 )
-from platform_sdk.word_audio_cache_profiles import (
-    CURRENT_WORD_CACHE_TAG as _CURRENT_WORD_CACHE_TAG,
-    LEGACY_NORMAL_WORD_VOICES as _LEGACY_NORMAL_WORD_VOICES,
-    LEGACY_SEGMENTED_WORD_VOICES as _LEGACY_SEGMENTED_WORD_VOICES,
-    LEGACY_WORD_CACHE_TAG as _LEGACY_WORD_CACHE_TAG,
-    RYAN_WORD_AUDIO_OVERRIDES as _RYAN_WORD_AUDIO_OVERRIDES,
-    RYAN_WORD_AUDIO_VOICE as _RYAN_WORD_AUDIO_VOICE,
-    SEGMENTED_WORD_CACHE_TAG as _SEGMENTED_WORD_CACHE_TAG,
-)
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
 BACKEND_PATH = REPO_ROOT / 'backend'
 if str(BACKEND_PATH) not in sys.path:
     sys.path.insert(0, str(BACKEND_PATH))
 
-from platform_sdk.word_tts_runtime_adapter import (
-    normalize_word_key,
-    word_tts_cache_path,
+from services.word_tts import azure_default_model, azure_word_voice  # noqa: E402
+
+# Implementation submodules. They read monkeypatchable names
+# (``azure_default_model`` / ``azure_word_voice`` / ``word_tts_cache_path``
+# / ``resolve_normal_word_audio_identity`` / ``phonetic_identity`` /
+# ``httpx``) from this module at call time via
+# ``platform_sdk._wrapper_registry.get_wrapper()`` so the patch
+# propagates regardless of how this module was loaded.
+from platform_sdk._helpers import (  # noqa: E402,F401
+    DEFAULT_ASR_SERVICE_URL,
+    DEFAULT_TTS_MEDIA_SERVICE_URL,
+    asr_service_url,
+    normalize_word_audio_pronunciation_mode,
+    resolve_normal_word_audio_identity,
+    tts_media_service_url,
+    validate_sentence,
 )
-from platform_sdk import word_audio_phonetic_identity as phonetic_identity
-from services.word_tts import azure_default_model, azure_word_voice
+from platform_sdk._resolution import (  # noqa: E402,F401
+    resolve_word_audio_request,
+    resolve_word_audio_request_candidates,
+)
+from platform_sdk._proxy import (  # noqa: E402,F401
+    apply_audio_headers,
+    audio_content_response,
+    audio_payload_from_response,
+    call_media_upstream,
+    fetch_example_audio_content,
+    fetch_example_audio_metadata,
+    fetch_follow_read_chunked_audio,
+    fetch_follow_read_word,
+    fetch_tts_voices,
+    fetch_word_audio_content,
+    fetch_word_audio_metadata,
+    generate_tts_audio,
+    metadata_only_response,
+    proxy_generic_tts_response,
+    proxy_json_response,
+    transcribe_speech_upload,
+)
+from platform_sdk._wrapper_registry import set_wrapper  # noqa: E402
 
-DEFAULT_TTS_MEDIA_SERVICE_URL, DEFAULT_ASR_SERVICE_URL = 'http://127.0.0.1:8105', 'http://127.0.0.1:8106'
-_AUDIO_BYTES_HEADER, _AUDIO_CACHE_KEY_HEADER = 'X-Audio-Bytes', 'X-Audio-Cache-Key'
-_AUDIO_OSS_URL_HEADER, _AUDIO_SOURCE_HEADER = 'X-Audio-Oss-Url', 'X-Audio-Source'
-_MEDIA_ID_HEADER = 'X-Media-Id'
+# Register this module so the implementation submodules can look it up.
+# Must run last so all re-exported names are already bound.
+# Use ``globals()`` so the binding works regardless of how the module
+# was loaded (production ``sys.modules[name]`` or legacy
+# ``importlib.util.spec_from_file_location`` without registration).
+set_wrapper(globals())
 
-def tts_media_service_url() -> str:
-    return (os.environ.get('TTS_MEDIA_SERVICE_URL') or DEFAULT_TTS_MEDIA_SERVICE_URL).rstrip('/')
-
-
-def asr_service_url() -> str:
-    return (os.environ.get('ASR_SERVICE_URL') or DEFAULT_ASR_SERVICE_URL).rstrip('/')
-
-
-def validate_sentence(sentence: str) -> str:
-    resolved = (sentence or '').strip()
-    if not resolved:
-        raise HTTPException(status_code=400, detail='sentence is required')
-    return resolved
-
-def normalize_word_audio_pronunciation_mode(value: str | None) -> str:
-    normalized = (value or '').strip().lower()
-    if normalized in {'word-segmented', 'phonetic-segments', 'phonetic_segments'}:
-        return 'word-segmented'
-    return 'word'
-
-
-def resolve_normal_word_audio_identity() -> tuple[str, str, str]:
-    return 'azure', f'{azure_default_model()}@{_CURRENT_WORD_CACHE_TAG}', azure_word_voice()
-
-def resolve_word_audio_request(word: str, pronunciation_mode: str | None = None) -> dict[str, str]:
-    raw = (word or '').strip()
-    if not raw or len(raw) > 160:
-        raise HTTPException(status_code=400, detail='invalid w')
-    normalized = normalize_word_key(raw)
-    resolved_mode = normalize_word_audio_pronunciation_mode(pronunciation_mode)
-    if resolved_mode == 'word-segmented':
-        provider = 'azure'
-        model = f'{azure_default_model()}@{_SEGMENTED_WORD_CACHE_TAG}'
-        voice = azure_word_voice()
-    else:
-        provider, model, voice = resolve_normal_word_audio_identity()
-    if resolved_mode == 'word' and provider == 'azure' and normalized in _RYAN_WORD_AUDIO_OVERRIDES:
-        voice = _RYAN_WORD_AUDIO_VOICE
-    phonetic = phonetic_identity.explicit_word_audio_phonetic(raw) if resolved_mode == 'word' else ''
-    if phonetic:
-        model, phonetic = phonetic_identity.apply_tts_phonetic_audio_identity(model, phonetic)
-    file_name = word_tts_cache_path(Path('word_tts_cache'), normalized, model, voice).name
-    return {
-        'word': raw,
-        'normalized_word': normalized,
-        'provider': provider, 'model': model,
-        'voice': voice, 'file_name': file_name,
-        'pronunciation_mode': resolved_mode, 'phonetic': phonetic,
-    }
-
-
-def resolve_word_audio_request_candidates(
-    word: str,
-    pronunciation_mode: str | None = None,
-) -> list[dict[str, str]]:
-    primary = resolve_word_audio_request(word, pronunciation_mode=pronunciation_mode)
-    candidates: list[dict[str, str]] = []
-    seen: set[tuple[str, str, str]] = set()
-
-    def append_candidate(candidate_model: str, candidate_voice: str):
-        key = (primary['provider'], candidate_model, candidate_voice)
-        if key in seen:
-            return
-        seen.add(key)
-        fallback_file_name = word_tts_cache_path(
-            Path('word_tts_cache'),
-            primary['normalized_word'],
-            candidate_model,
-            candidate_voice,
-        ).name
-        candidates.append({
-            **primary,
-            'model': candidate_model,
-            'voice': candidate_voice,
-            'file_name': fallback_file_name,
-        })
-
-    append_candidate(primary['model'], primary['voice'])
-    if primary.get('phonetic') or '@ipa-review-' in primary['model']:
-        return candidates
-    if primary['pronunciation_mode'] != 'word-segmented':
-        if primary['provider'] != 'azure':
-            return candidates
-        base_model, separator, _cache_tag = primary['model'].partition('@')
-        if not separator:
-            return candidates
-        legacy_model = f'{base_model}@{_LEGACY_WORD_CACHE_TAG}'
-        append_candidate(legacy_model, primary['voice'])
-        for fallback_voice in _LEGACY_NORMAL_WORD_VOICES:
-            normalized_voice = (fallback_voice or '').strip()
-            if not normalized_voice:
-                continue
-            append_candidate(legacy_model, normalized_voice)
-        return candidates
-
-    for fallback_voice in _LEGACY_SEGMENTED_WORD_VOICES:
-        normalized_voice = (fallback_voice or '').strip()
-        if not normalized_voice:
-            continue
-        append_candidate(primary['model'], normalized_voice)
-    return candidates
-
-
-def call_media_upstream(
-    *,
-    service_name: str,
-    method: str,
-    base_url: str,
-    path: str,
-    params: dict | None = None,
-    json: dict | None = None,
-    files=None,
-    headers: dict[str, str] | None = None,
-    unavailable_detail: str,
-) -> httpx.Response:
-    request_headers = dict(headers or {})
-    policy = resolve_gateway_upstream_policy(
-        service_name=service_name,
-        path=path,
-    )
-
-    attempt_index = 0
-    while True:
-        try:
-            before_gateway_upstream_attempt(policy)
-        except GatewayCircuitOpenError as exc:
-            raise HTTPException(status_code=503, detail=f'{service_name} circuit open') from exc
-
-        try:
-            with httpx.Client(timeout=policy.build_timeout(), follow_redirects=False) as client:
-                response = client.request(
-                    method,
-                    f'{base_url}{path}',
-                    params=params,
-                    json=json,
-                    files=files,
-                    headers=request_headers,
-                )
-        except httpx.TimeoutException as exc:
-            record_gateway_upstream_failure(policy)
-            if should_retry_gateway_upstream(
-                policy=policy,
-                method=method,
-                attempt_index=attempt_index,
-                request_headers=request_headers,
-                error=exc,
-            ):
-                attempt_index += 1
-                continue
-            raise HTTPException(status_code=504, detail=f'{service_name} timed out') from exc
-        except httpx.HTTPError as exc:
-            record_gateway_upstream_failure(policy)
-            if should_retry_gateway_upstream(
-                policy=policy,
-                method=method,
-                attempt_index=attempt_index,
-                request_headers=request_headers,
-                error=exc,
-            ):
-                attempt_index += 1
-                continue
-            raise HTTPException(status_code=502, detail=unavailable_detail) from exc
-
-        if response.status_code >= 500:
-            should_retry = should_retry_gateway_upstream(
-                policy=policy,
-                method=method,
-                attempt_index=attempt_index,
-                request_headers=request_headers,
-                status_code=response.status_code,
-            )
-            record_gateway_upstream_failure(policy)
-            if should_retry:
-                attempt_index += 1
-                continue
-            return response
-
-        record_gateway_upstream_success(policy)
-        return response
-
-
-def audio_payload_from_response(response: httpx.Response) -> dict:
-    return {
-        'body': response.content,
-        'content_type': response.headers.get('content-type', 'application/octet-stream'),
-        'byte_length': response.headers.get(_AUDIO_BYTES_HEADER, ''),
-        'cache_key': response.headers.get(_AUDIO_CACHE_KEY_HEADER, ''),
-        'signed_url': response.headers.get(_AUDIO_OSS_URL_HEADER, ''),
-        'media_id': response.headers.get(_MEDIA_ID_HEADER, ''),
-    }
-
-
-def fetch_word_audio_metadata(
-    *,
-    file_name: str,
-    model: str,
-    voice: str,
-    headers: dict[str, str] | None = None,
-) -> dict | None:
-    response = call_media_upstream(
-        service_name='tts-media-service',
-        method='GET',
-        base_url=tts_media_service_url(),
-        path='/v1/media/word-audio',
-        params={'file_name': file_name, 'model': model, 'voice': voice},
-        headers=headers,
-        unavailable_detail='tts media service unavailable',
-    )
-    if response.status_code == 404:
-        return None
-    if response.status_code >= 400:
-        raise HTTPException(status_code=502, detail='tts media service error')
-    return response.json()
-
-
-def fetch_word_audio_content(
-    *,
-    file_name: str,
-    model: str,
-    voice: str,
-    headers: dict[str, str] | None = None,
-) -> dict | None:
-    response = call_media_upstream(
-        service_name='tts-media-service',
-        method='GET',
-        base_url=tts_media_service_url(),
-        path='/v1/media/word-audio/content',
-        params={'file_name': file_name, 'model': model, 'voice': voice},
-        headers=headers,
-        unavailable_detail='tts media service unavailable',
-    )
-    if response.status_code == 404:
-        return None
-    if response.status_code >= 400:
-        raise HTTPException(status_code=502, detail='tts media service error')
-    return audio_payload_from_response(response)
-
-
-def fetch_follow_read_word(
-    *,
-    word: str,
-    phonetic: str | None = None,
-    definition: str | None = None,
-    pos: str | None = None,
-    headers: dict[str, str] | None = None,
-) -> dict:
-    params = {'w': word}
-    if phonetic:
-        params['phonetic'] = phonetic
-    if definition:
-        params['definition'] = definition
-    if pos:
-        params['pos'] = pos
-    response = call_media_upstream(
-        service_name='tts-media-service',
-        method='GET',
-        base_url=tts_media_service_url(),
-        path='/v1/media/follow-read-word',
-        params=params,
-        headers=headers,
-        unavailable_detail='tts media service unavailable',
-    )
-    if response.status_code == 400:
-        raise HTTPException(status_code=400, detail='invalid w')
-    if response.status_code >= 400:
-        raise HTTPException(status_code=502, detail='tts media service error')
-    return response.json()
-
-
-def fetch_follow_read_chunked_audio(
-    *,
-    word: str,
-    phonetic: str | None = None,
-    headers: dict[str, str] | None = None,
-) -> dict:
-    params = {'w': word}
-    if phonetic:
-        params['phonetic'] = phonetic
-    response = call_media_upstream(
-        service_name='tts-media-service',
-        method='GET',
-        base_url=tts_media_service_url(),
-        path='/v1/media/follow-read-chunked-audio',
-        params=params,
-        headers=headers,
-        unavailable_detail='tts media service unavailable',
-    )
-    if response.status_code == 400:
-        raise HTTPException(status_code=400, detail='invalid w')
-    if response.status_code >= 400:
-        raise HTTPException(status_code=502, detail='tts media service error')
-    return audio_payload_from_response(response)
-
-
-def fetch_example_audio_metadata(
-    *,
-    sentence: str,
-    word: str | None = None,
-    headers: dict[str, str] | None = None,
-) -> dict:
-    response = call_media_upstream(
-        service_name='tts-media-service',
-        method='POST',
-        base_url=tts_media_service_url(),
-        path='/v1/media/example-audio/metadata',
-        json={'sentence': sentence, 'word': word},
-        headers=headers,
-        unavailable_detail='tts media service unavailable',
-    )
-    if response.status_code == 400:
-        raise HTTPException(status_code=400, detail='sentence is required')
-    if response.status_code >= 400:
-        raise HTTPException(status_code=502, detail='tts media service error')
-    return response.json()
-
-
-def fetch_example_audio_content(
-    *,
-    sentence: str,
-    word: str | None = None,
-    headers: dict[str, str] | None = None,
-) -> dict:
-    response = call_media_upstream(
-        service_name='tts-media-service',
-        method='POST',
-        base_url=tts_media_service_url(),
-        path='/v1/media/example-audio/content',
-        json={'sentence': sentence, 'word': word},
-        headers=headers,
-        unavailable_detail='tts media service unavailable',
-    )
-    if response.status_code == 400:
-        raise HTTPException(status_code=400, detail='sentence is required')
-    if response.status_code >= 400:
-        raise HTTPException(status_code=502, detail='tts media service error')
-    return audio_payload_from_response(response)
-
-
-def fetch_tts_voices(*, provider: str | None = None, headers: dict[str, str] | None = None) -> dict:
-    response = call_media_upstream(
-        service_name='tts-media-service',
-        method='GET',
-        base_url=tts_media_service_url(),
-        path='/v1/tts/voices',
-        params={'provider': provider} if provider else None,
-        headers=headers,
-        unavailable_detail='tts media service unavailable',
-    )
-    if response.status_code >= 400:
-        raise HTTPException(status_code=502, detail='tts media service error')
-    return response.json()
-
-
-def generate_tts_audio(payload: dict, *, headers: dict[str, str] | None = None) -> httpx.Response:
-    return call_media_upstream(
-        service_name='tts-media-service',
-        method='POST',
-        base_url=tts_media_service_url(),
-        path='/v1/tts/generate',
-        json=payload,
-        headers=headers,
-        unavailable_detail='tts media service unavailable',
-    )
-
-
-def transcribe_speech_upload(
-    *,
-    filename: str,
-    content: bytes,
-    content_type: str | None,
-    headers: dict[str, str] | None = None,
-) -> httpx.Response:
-    return call_media_upstream(
-        service_name='asr-service',
-        method='POST',
-        base_url=asr_service_url(),
-        path='/v1/speech/transcribe',
-        files={'audio': (filename, content, content_type or 'application/octet-stream')},
-        headers=headers,
-        unavailable_detail='asr service unavailable',
-    )
-
-
-def apply_audio_headers(response: Response, *, byte_length: str | int | None, cache_key: str | None) -> Response:
-    if byte_length not in (None, ''):
-        response.headers[_AUDIO_BYTES_HEADER] = str(byte_length)
-    if cache_key:
-        response.headers[_AUDIO_CACHE_KEY_HEADER] = cache_key
-    response.headers['Cache-Control'] = 'no-store, max-age=0'
-    response.headers['Pragma'] = 'no-cache'
-    response.headers['Accept-Ranges'] = 'none'
-    return response
-
-
-def metadata_only_response(metadata: dict, *, source: str) -> Response:
-    response = Response(status_code=204)
-    cache_hit = metadata.get('cache_hit')
-    if cache_hit is None:
-        cache_hit = any(
-            metadata.get(field) not in (None, '')
-            for field in ('byte_length', 'cache_key', 'signed_url', 'media_id')
-        )
-    if not cache_hit:
-        response.headers[_AUDIO_SOURCE_HEADER] = 'missing'
-        return response
-    response = apply_audio_headers(
-        response,
-        byte_length=metadata.get('byte_length'),
-        cache_key=metadata.get('cache_key'),
-    )
-    if metadata.get('signed_url'):
-        response.headers[_AUDIO_OSS_URL_HEADER] = str(metadata['signed_url'])
-    if metadata.get('media_id'):
-        response.headers[_MEDIA_ID_HEADER] = str(metadata['media_id'])
-    provider = str(metadata.get('provider') or '').strip().lower()
-    response.headers[_AUDIO_SOURCE_HEADER] = (
-        'oss' if provider == 'aliyun-oss' or metadata.get('signed_url') else source
-    )
-    return response
-
-
-def audio_content_response(payload: dict, *, source: str) -> Response:
-    response = Response(payload['body'], media_type=payload['content_type'])
-    response = apply_audio_headers(
-        response,
-        byte_length=payload.get('byte_length'),
-        cache_key=payload.get('cache_key'),
-    )
-    if payload.get('signed_url'):
-        response.headers[_AUDIO_OSS_URL_HEADER] = str(payload['signed_url'])
-    if payload.get('media_id'):
-        response.headers[_MEDIA_ID_HEADER] = str(payload['media_id'])
-    provider = str(payload.get('provider') or '').strip().lower()
-    response.headers[_AUDIO_SOURCE_HEADER] = (
-        'oss' if provider == 'aliyun-oss' or payload.get('signed_url') else source
-    )
-    return response
-
-
-def proxy_generic_tts_response(response: httpx.Response):
-    content_type = response.headers.get('content-type', '')
-    if 'application/json' in content_type:
-        return JSONResponse(status_code=response.status_code, content=response.json())
-    proxy = Response(response.content, status_code=response.status_code, media_type=content_type or None)
-    return apply_audio_headers(
-        proxy,
-        byte_length=response.headers.get(_AUDIO_BYTES_HEADER, ''),
-        cache_key=response.headers.get(_AUDIO_CACHE_KEY_HEADER, ''),
-    )
-
-
-def proxy_json_response(response: httpx.Response):
-    content_type = response.headers.get('content-type', '')
-    if 'application/json' in content_type:
-        return JSONResponse(status_code=response.status_code, content=response.json())
-    return Response(response.content, status_code=response.status_code, media_type=content_type or None)
+__all__ = [
+    'DEFAULT_ASR_SERVICE_URL',
+    'DEFAULT_TTS_MEDIA_SERVICE_URL',
+    'apply_audio_headers',
+    'asr_service_url',
+    'audio_content_response',
+    'audio_payload_from_response',
+    'azure_default_model',
+    'azure_word_voice',
+    'call_media_upstream',
+    'fetch_example_audio_content',
+    'fetch_example_audio_metadata',
+    'fetch_follow_read_chunked_audio',
+    'fetch_follow_read_word',
+    'fetch_tts_voices',
+    'fetch_word_audio_content',
+    'fetch_word_audio_metadata',
+    'generate_tts_audio',
+    'httpx',
+    'metadata_only_response',
+    'normalize_word_audio_pronunciation_mode',
+    'phonetic_identity',
+    'proxy_generic_tts_response',
+    'proxy_json_response',
+    'resolve_normal_word_audio_identity',
+    'resolve_word_audio_request',
+    'resolve_word_audio_request_candidates',
+    'transcribe_speech_upload',
+    'tts_media_service_url',
+    'validate_sentence',
+    'word_tts_cache_path',
+]

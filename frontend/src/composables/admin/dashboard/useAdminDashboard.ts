@@ -191,7 +191,7 @@ export function useAdminDashboard() {
   useEffect(() => {
     if (tab !== 'assets') return
     void fetchAssets(assetPage, assetSearch, assetBookId, assetMnemonicStatus)
-  }, [fetchAssets, tab])
+  }, [assetBookId, assetMnemonicStatus, assetPage, assetSearch, fetchAssets, tab])
 
   useEffect(() => {
     refreshTimer.current = setInterval(() => {

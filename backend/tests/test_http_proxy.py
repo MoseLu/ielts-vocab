@@ -175,6 +175,34 @@ def test_proxy_browser_request_uses_extended_timeout_for_custom_books(monkeypatc
     assert captured_timeouts[0].read == 60.0
 
 
+def test_proxy_browser_request_uses_extended_timeout_for_journal_polish(monkeypatch):
+    reset_gateway_upstream_state()
+    outcomes = [
+        FakeResponse(
+            status_code=200,
+            headers={'content-type': 'application/json'},
+            content=b'{"polished":"improved"}',
+        ),
+    ]
+    captured_calls: list[dict[str, object]] = []
+    captured_timeouts: list[object] = []
+    monkeypatch.setattr(
+        http_proxy.httpx,
+        'AsyncClient',
+        _make_async_client(outcomes, captured_calls, captured_timeouts),
+    )
+
+    app = _build_proxy_app(service_name='notes-service', upstream_path='/api/notes/journal/polish')
+    client = TestClient(app, base_url='https://axiomaticworld.com')
+
+    response = client.post('/proxy', json={'content': 'hello'})
+
+    assert response.status_code == 200
+    assert response.json() == {'polished': 'improved'}
+    assert len(captured_calls) == 1
+    assert captured_timeouts[0].read == 60.0
+
+
 def test_proxy_browser_request_preserves_event_stream_headers(monkeypatch):
     reset_gateway_upstream_state()
     outcomes = [

@@ -17,7 +17,10 @@ restore_release=""
 
 bool_is_true() {
   local raw="${1:-false}"
-  [[ "${raw,,}" == "true" ]]
+  case "${raw}" in
+    [Tt][Rr][Uu][Ee]) return 0 ;;
+    *) return 1 ;;
+  esac
 }
 
 

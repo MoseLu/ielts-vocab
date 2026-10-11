@@ -66,6 +66,34 @@ interface ChapterModalProps {
   onFallback?: () => void
 }
 
+const CHAPTER_PROGRESS_MODES = new Set([
+  'smart',
+  'listening',
+  'meaning',
+  'dictation',
+  'follow',
+  'radio',
+  'quickmemory',
+  'test',
+])
+
+function resolveCurrentPracticeMode(): string {
+  const currentWindowMode = typeof window !== 'undefined'
+    ? (window as Window & { __currentMode?: string }).__currentMode
+    : ''
+  const storedMode = typeof window !== 'undefined'
+    ? window.localStorage.getItem('current_mode')
+    : ''
+  const mode = String(currentWindowMode || storedMode || '').trim()
+  return CHAPTER_PROGRESS_MODES.has(mode) ? mode : ''
+}
+
+function resolveChapterProgressMode(book: Book): string {
+  const explicitMode = String(book.practice_mode || '').trim()
+  if (explicitMode) return explicitMode
+  return resolveCurrentPracticeMode()
+}
+
 interface SectionGroup {
   label: string
   isMultiPart: boolean
@@ -194,6 +222,10 @@ function ChapterModal({ book, progress, onClose, onSelectChapter, onFallback }: 
   const currentIndex = progress?.current_index || 0
   const isConfusableBook = String(book.id) === 'ielts_confusable_match'
   const isCustomBook = !!book.is_custom_book && !isConfusableBook
+  const chapterProgressMode = resolveChapterProgressMode(book)
+  const progressModeQuery = chapterProgressMode
+    ? `?mode=${encodeURIComponent(chapterProgressMode)}`
+    : ''
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow
@@ -213,7 +245,7 @@ function ChapterModal({ book, progress, onClose, onSelectChapter, onFallback }: 
         if (user) {
           try {
             const progressData = await apiFetch<{ chapter_progress?: Record<string | number, ChapterProgress> }>(
-              `/api/books/${book.id}/chapters/progress`,
+              `/api/books/${book.id}/chapters/progress${progressModeQuery}`,
             )
             setChapterProgress(progressData.chapter_progress || {})
           } catch {
@@ -229,7 +261,7 @@ function ChapterModal({ book, progress, onClose, onSelectChapter, onFallback }: 
     }
 
     fetchData()
-  }, [book.id, onFallback, user])
+  }, [book.id, onFallback, progressModeQuery, user])
 
   const currentChapterId = useMemo((): string | number | null => {
     if (!chapters.length || currentIndex === 0) return null
@@ -310,9 +342,8 @@ function ChapterModal({ book, progress, onClose, onSelectChapter, onFallback }: 
     const modeRecords = Object.values(progressRecord?.modes ?? {})
     const hasStarted = learnedCount > 0 || modeRecords.some(record => (record.correct_count ?? 0) + (record.wrong_count ?? 0) > 0)
     const hasModeData = modeRecords.length > 0
-    const allCompleted = hasModeData && modeRecords.every(record => record.is_completed)
     const isCoverageComplete = progressTotal > 0 && learnedCount >= progressTotal
-    const isCompleted = !!progressRecord?.is_completed || allCompleted || isCoverageComplete
+    const isCompleted = !!progressRecord?.is_completed || isCoverageComplete
     const chapterProgressPercent = isCompleted
       ? 100
       : progressTotal

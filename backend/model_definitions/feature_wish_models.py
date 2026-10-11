@@ -1,6 +1,14 @@
 import json
 
 
+def _fresh_feature_wish_url(object_key: str, stored_url: str) -> str:
+    try:
+        from platform_sdk.storage.aliyun_oss import sign_object_url
+    except Exception:
+        return stored_url
+    return sign_object_url(object_key=object_key) or stored_url
+
+
 class FeatureWish(db.Model):
     __tablename__ = 'feature_wishes'
 
@@ -68,7 +76,7 @@ class FeatureWishImage(db.Model):
             'original_filename': self.original_filename,
             'content_type': self.content_type,
             'byte_length': self.byte_length,
-            'thumbnail_url': self.thumbnail_url,
-            'full_url': self.full_url,
+            'thumbnail_url': _fresh_feature_wish_url(self.thumbnail_object_key, self.thumbnail_url),
+            'full_url': _fresh_feature_wish_url(self.full_object_key, self.full_url),
             'created_at': self.created_at.isoformat() if self.created_at else None,
         }

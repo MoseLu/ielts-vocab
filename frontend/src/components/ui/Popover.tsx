@@ -6,7 +6,7 @@
 //   - Arrow uses 1px border technique matching el-popper style
 //   - Auto-flip when space is insufficient (@floating-ui)
 
-import React, { useState, useRef, useEffect, useCallback } from 'react'
+import React, { useState, useRef, useEffect, useCallback, useId, isValidElement, cloneElement } from 'react'
 import { createPortal } from 'react-dom'
 import {
   useFloating,
@@ -38,6 +38,19 @@ interface PopoverDropdownProps {
 }
 
 const CLOSE_DURATION = 150 // ms — must match CSS animation duration
+type PopoverTriggerProps = React.HTMLAttributes<HTMLElement> & React.RefAttributes<HTMLElement>
+
+function mergeRefs<T>(...refs: Array<React.Ref<T> | undefined>) {
+  return (node: T | null) => {
+    refs.forEach((ref) => {
+      if (typeof ref === 'function') {
+        ref(node)
+      } else if (ref && typeof ref === 'object') {
+        ;(ref as React.MutableRefObject<T | null>).current = node
+      }
+    })
+  }
+}
 
 const PopoverDropdown: React.FC<PopoverDropdownProps> = ({
   trigger,
@@ -56,6 +69,7 @@ const PopoverDropdown: React.FC<PopoverDropdownProps> = ({
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const arrowRef = useRef<HTMLDivElement>(null)
   const panelRef = useRef<HTMLDivElement | null>(null)
+  const panelId = useId()
 
   const isControlled = controlledOpen !== undefined
   const isOpen = isControlled ? controlledOpen : uncontrolledOpen
@@ -164,9 +178,44 @@ const PopoverDropdown: React.FC<PopoverDropdownProps> = ({
       ? { position: strategy, left: x, top: y }
       : { position: strategy, visibility: 'hidden' as const }
 
+  const toggleOpen = useCallback(() => {
+    setOpen(!isOpen)
+  }, [isOpen, setOpen])
+
+  const triggerElement = isValidElement<PopoverTriggerProps>(trigger) ? trigger : null
+  const triggerNode = triggerElement
+    ? cloneElement(triggerElement, {
+        ref: mergeRefs(
+          triggerElement.props.ref,
+          refs.setReference,
+        ),
+        onClick: (event: React.MouseEvent<HTMLElement>) => {
+          const originalOnClick = triggerElement.props.onClick
+          originalOnClick?.(event)
+          if (!event.defaultPrevented) {
+            toggleOpen()
+          }
+        },
+        'aria-expanded': isOpen,
+        'aria-controls': displayPanel ? panelId : undefined,
+      })
+    : (
+        <button
+          type="button"
+          ref={refs.setReference}
+          onClick={toggleOpen}
+          className="popover-trigger"
+          aria-expanded={isOpen}
+          aria-controls={displayPanel ? panelId : undefined}
+        >
+          {trigger}
+        </button>
+      )
+
   const panel = displayPanel
     ? createPortal(
         <div
+          id={panelId}
           ref={(node) => {
             refs.setFloating(node)
             panelRef.current = node
@@ -191,13 +240,7 @@ const PopoverDropdown: React.FC<PopoverDropdownProps> = ({
 
   return (
     <>
-      <div
-        ref={refs.setReference}
-        onClick={() => setOpen(!isOpen)}
-        className="popover-trigger"
-      >
-        {trigger}
-      </div>
+      {triggerNode}
       {panel}
     </>
   )

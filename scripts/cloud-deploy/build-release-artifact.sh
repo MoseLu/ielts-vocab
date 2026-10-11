@@ -34,6 +34,7 @@ fi
 
 commit_sha="$(git -C "${repo_root_native}" rev-parse --verify "${git_ref}^{commit}")"
 asset_base="$(resolve_frontend_asset_base)"
+require_frontend_asset_base "${asset_base}" "release artifact" "${RELEASE_ARTIFACT_REQUIRE_FRONTEND_ASSET_BASE:-true}"
 
 if ! command -v pnpm >/dev/null 2>&1 || ! pnpm --version >/dev/null 2>&1; then
   ensure_node_runtime

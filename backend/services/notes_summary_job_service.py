@@ -40,7 +40,7 @@ def _validate_target_date(raw_target_date):
 
 
 def _build_summary_context(user_id: int, target_date: str) -> dict:
-    learning_notes, sessions, wrong_words, prompt_runs = collect_summary_source_data(user_id, target_date)
+    learning_notes, sessions, wrong_words, prompt_runs, manual_recap = collect_summary_source_data(user_id, target_date)
     learning_snapshot = build_learning_snapshot(
         user_id,
         target_date,
@@ -60,12 +60,14 @@ def _build_summary_context(user_id: int, target_date: str) -> dict:
         topic_insights=topic_insights,
         learner_profile=learner_profile,
         prompt_runs=prompt_runs,
+        manual_recap=manual_recap,
     )
     return {
         'learning_notes': learning_notes,
         'sessions': sessions,
         'wrong_words': wrong_words,
         'prompt_runs': prompt_runs,
+        'manual_recap': manual_recap,
         'estimated_chars': estimated_chars,
         'user_content': user_content,
     }

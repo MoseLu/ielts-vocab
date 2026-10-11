@@ -110,6 +110,7 @@ def _public_cors_origins() -> list[str]:
     raw = (
         os.environ.get('FRONTEND_ASSET_OSS_CORS_ORIGINS')
         or os.environ.get('CORS_ORIGINS')
+        or os.environ.get('PUBLIC_WEB_ORIGINS')
         or ','.join(DEFAULT_CORS_ORIGINS)
     )
     origins: list[str] = []

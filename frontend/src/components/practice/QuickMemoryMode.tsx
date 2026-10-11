@@ -26,10 +26,9 @@ import {
 const TIMER_SECONDS = 4
 const TEST_HIDE_KNOWN_AFTER_MS = 2500
 const TEST_AUTO_UNKNOWN_AFTER_MS = 4000
-const QUICK_MEMORY_PLAYBACK_OPTIONS = { sourcePreference: 'buffer' as const }
+const QUICK_MEMORY_PLAYBACK_OPTIONS = { sourcePreference: 'generated' as const }
 const QUICK_MEMORY_PRELOAD_OPTIONS = { includeBuffer: true, sourcePreference: 'buffer' as const }
 type RevealOptions = { countAsActivity?: boolean; shouldPlayRevealAudio?: boolean; isFuzzy?: boolean }
-
 function syncRecordToBackend(
   word: string,
   record: QuickMemoryRecordState,
@@ -41,7 +40,6 @@ function syncRecordToBackend(
     { ...scope, sourceMode: modeVariant },
   ).catch(() => {})
 }
-
 export default function QuickMemoryMode({
   vocabulary,
   queue,
@@ -97,7 +95,6 @@ export default function QuickMemoryMode({
     showToast('进度保存失败，请检查网络连接', 'error')
   }, [showToast])
   wordRef.current = currentWord
-
   const {
     completedSessionDurationSecondsRef,
     flushPendingRecordSync,
@@ -105,7 +102,7 @@ export default function QuickMemoryMode({
     prepareLearningSession,
     resetCurrentSessionSegment,
     resultsRef,
-    sessionLoggedRef,
+    sessionLoggedRef, sessionStartRef,
     syncSessionSnapshot,
   } = useQuickMemoryModeRuntime({
     modeVariant,
@@ -123,7 +120,6 @@ export default function QuickMemoryMode({
     showSaveError: showProgressSaveError,
     onCompletedSessionDurationChange: setCompletedSessionDurationSeconds,
   })
-
   const clearQuestionTimers = useCallback(() => {
     clearInterval(timerRef.current)
     clearTimeout(hideKnownTimerRef.current)
@@ -157,6 +153,7 @@ export default function QuickMemoryMode({
     setCompletedSessionDurationSeconds(null)
     sessionLoggedRef.current = false
     resetCurrentSessionSegment()
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- refs are stable, intentionally omitted
   }, [bookId, chapterId, clearQuestionTimers, initialIndex, isTestMode, modeVariant, onIndexChange, queue.length, resetCurrentSessionSegment])
 
   const reveal = useCallback(async (picked: 'known' | 'unknown', options: RevealOptions = {}) => {
@@ -172,10 +169,6 @@ export default function QuickMemoryMode({
     }
 
     const actionAt = Date.now()
-    if (countAsActivity) {
-      await prepareLearningSession(actionAt)
-    }
-
     const isFuzzy = options.isFuzzy ?? revisitedSet.has(index)
 
     setChoice(picked)
@@ -207,17 +200,22 @@ export default function QuickMemoryMode({
       : [...prevResults, entry]
     resultsRef.current = nextResults
     setResults(nextResults)
+
+    if (picked === 'unknown' && answeredWord) {
+      onWrongWord(answeredWord)
+    }
+
+    if (countAsActivity) {
+      await prepareLearningSession(actionAt)
+    }
+
     syncSessionSnapshot({
       ...(countAsActivity ? { activeAt: actionAt } : {}),
       wordsStudied: nextResults.length,
       correctCount: nextResults.filter(result => result.choice === 'known').length,
       wrongCount: nextResults.filter(result => result.choice === 'unknown').length,
     })
-
-    if (picked === 'unknown' && answeredWord) {
-      onWrongWord(answeredWord)
-    }
-
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- pendingRecordSyncRef/resultsRef are stable refs
   }, [clearQuestionTimers, currentWord, index, isTestMode, modeVariant, onQuickMemoryRecordChange, onWrongWord, prepareLearningSession, quickMemoryScope, revisitedSet, settings, syncSessionSnapshot])
 
   const beginAutoUnknownReveal = useCallback(() => {
@@ -302,10 +300,11 @@ export default function QuickMemoryMode({
     return () => {
       clearQuestionTimers()
     }
-  }, [clearQuestionTimers, currentWord?.word, index, isTestMode, phase, queue, reviewMode, settings, startQuestionCountdown, vocabulary])
+  }, [clearQuestionTimers, currentWord, currentWord?.word, index, isTestMode, phase, queue, reviewMode, settings, startQuestionCountdown, vocabulary])
 
   useEffect(() => {
     void reconcileQuickMemoryRecordsWithBackend().catch(() => {})
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fire-once on mount, no deps needed
   }, [])
 
   useEffect(() => () => {
@@ -318,6 +317,10 @@ export default function QuickMemoryMode({
     clearQuestionTimers()
     const next = index + 1
     if (next >= queue.length) {
+      if (sessionStartRef.current > 0) {
+        const elapsedSeconds = Math.max(0, Math.round((Date.now() - sessionStartRef.current) / 1000))
+        setCompletedSessionDurationSeconds((completedSessionDurationSecondsRef.current ?? 0) + elapsedSeconds)
+      }
       setDone(true)
       return
     }
@@ -329,7 +332,7 @@ export default function QuickMemoryMode({
     setQuestionReady(!isTestMode)
     setKnownChoiceAvailable(true)
     setRevealWasFuzzy(false)
-  }, [clearQuestionTimers, index, isTestMode, onIndexChange, prepareLearningSession, queue.length])
+  }, [clearQuestionTimers, completedSessionDurationSecondsRef, index, isTestMode, onIndexChange, prepareLearningSession, queue.length, sessionStartRef])
 
   const handlePrev = useCallback(async () => {
     if (index === 0) return
@@ -415,6 +418,7 @@ export default function QuickMemoryMode({
     sessionLoggedRef.current = false
     resetCurrentSessionSegment()
     setDone(false)
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- refs are stable, intentionally omitted
   }, [clearQuestionTimers, isTestMode, onIndexChange, resetCurrentSessionSegment])
 
   const handleContinueReview = useCallback(async () => {
@@ -448,6 +452,7 @@ export default function QuickMemoryMode({
         reviewHasMore={reviewHasMore}
         onContinueReview={onContinueReview ? handleContinueReview : undefined}
         chapterGroup={chapterGroup}
+        chapterTotalCount={chapterQueueWords?.length}
         onContinueChapterGroup={onContinueChapterGroup}
         buildChapterPath={buildChapterPath}
         sessionDurationSeconds={completedSessionDurationSeconds}

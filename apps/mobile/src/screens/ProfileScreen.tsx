@@ -64,7 +64,7 @@ function SurfaceCard({ children, style }: { children: React.ReactNode; style?: S
 
 function IconTile({ Icon, color, label, onPress, tone }: IconTileProps) {
   return (
-    <Pressable accessibilityRole="button" onPress={onPress} style={styles.iconTile}>
+    <Pressable accessibilityLabel={label} accessibilityRole="button" onPress={onPress} style={styles.iconTile} testID={`profile.tile.${label}`}>
       <View style={[styles.iconTileMark, { backgroundColor: tone }]}>
         <Icon color={color} size={25} strokeWidth={2.4} />
       </View>
@@ -77,7 +77,7 @@ function IconTile({ Icon, color, label, onPress, tone }: IconTileProps) {
 
 function SettingRow({ Icon, label, onPress, value }: SettingRowProps) {
   return (
-    <Pressable accessibilityRole="button" disabled={!onPress} onPress={onPress} style={styles.settingRow}>
+    <Pressable accessibilityLabel={label} accessibilityRole="button" disabled={!onPress} onPress={onPress} style={styles.settingRow} testID={`profile.setting.${label}`}>
       <View style={styles.settingLeft}>
         <Icon color={theme.colors.text} size={23} strokeWidth={2.1} />
         <Text style={styles.settingLabel}>{label}</Text>
@@ -104,6 +104,7 @@ export function ProfileScreen({ navigate }: { navigate: Navigate }) {
       contentContainerStyle={styles.screen}
       keyboardDismissMode="on-drag"
       keyboardShouldPersistTaps="handled"
+      showsVerticalScrollIndicator={false}
       style={styles.scroll}
     >
       <View style={styles.identityBlock}>
@@ -177,6 +178,7 @@ export function ProfileSettingsScreen({ navigate }: { goBack?: () => void; navig
       contentContainerStyle={styles.settingsScreen}
       keyboardDismissMode="on-drag"
       keyboardShouldPersistTaps="handled"
+      showsVerticalScrollIndicator={false}
       style={styles.scroll}
     >
       <SurfaceCard style={styles.settingGroup}>
@@ -233,6 +235,7 @@ export function ProfileSecurityScreen({ navigate }: { goBack?: () => void; navig
       contentContainerStyle={styles.settingsScreen}
       keyboardDismissMode="on-drag"
       keyboardShouldPersistTaps="handled"
+      showsVerticalScrollIndicator={false}
       style={styles.scroll}
     >
       <SurfaceCard>
@@ -306,6 +309,7 @@ export function ProfileFeedbackScreen({ navigate }: { goBack?: () => void; navig
       contentContainerStyle={styles.settingsScreen}
       keyboardDismissMode="on-drag"
       keyboardShouldPersistTaps="handled"
+      showsVerticalScrollIndicator={false}
       style={styles.scroll}
     >
       <SurfaceCard>
@@ -318,6 +322,7 @@ export function ProfileFeedbackScreen({ navigate }: { goBack?: () => void; navig
           placeholder="标题"
           placeholderTextColor={theme.colors.textTertiary}
           style={styles.input}
+          testID="feedback.title"
           value={wishTitle}
         />
         <TextInput
@@ -327,10 +332,11 @@ export function ProfileFeedbackScreen({ navigate }: { goBack?: () => void; navig
           placeholderTextColor={theme.colors.textTertiary}
           scrollEnabled={false}
           style={[styles.input, styles.textarea]}
+          testID="feedback.description"
           textAlignVertical="top"
           value={wishDescription}
         />
-        <Pressable accessibilityRole="button" onPress={() => void createWish().catch(err => setError(err.message))} style={styles.secondaryButton}>
+        <Pressable accessibilityLabel="提交反馈" accessibilityRole="button" onPress={() => void createWish().catch(err => setError(err.message))} style={styles.secondaryButton} testID="feedback.submit">
           <Sparkles color={theme.colors.accentDark} size={18} strokeWidth={2.2} />
           <Text style={styles.secondaryButtonText}>提交反馈</Text>
         </Pressable>

@@ -179,7 +179,7 @@ describe('usePracticePageControls saveProgress', () => {
         correct_count: 1,
         wrong_count: 0,
         is_completed: false,
-        words_learned: 1,
+        words_learned: 2,
         answered_words: ['beta'],
         queue_words: ['alpha', 'beta', 'gamma', 'delta'],
       }),

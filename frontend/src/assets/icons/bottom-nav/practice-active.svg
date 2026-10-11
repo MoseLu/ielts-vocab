@@ -1,0 +1,11 @@
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <g id="practice-active-icon">
+    <g id="practice-pencil">
+      <path d="M14.2 4.8L19.2 9.8L9.2 19.8H4.2V14.8L14.2 4.8Z" stroke="currentColor" stroke-width="2.1" stroke-linejoin="round"/>
+      <path d="M13.2 5.8L18.2 10.8" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"/>
+      <path d="M5.2 14.8L9.2 18.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+      <path d="M4.2 19.8L7.2 19.2L4.8 16.8L4.2 19.8Z" fill="currentColor" opacity="0.18"/>
+    </g>
+    <path id="practice-writing-line" pathLength="1" d="M13 19.5C14.8 18.4 16.6 18.4 19 19.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+  </g>
+</svg>

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
-import { useSpeechRecognition } from '../../../hooks/useSpeechRecognition'
+import { useSpeechRecognition } from '../../../hooks'
 import {
   AIPronunciationCheckResponseSchema,
   apiFetch,

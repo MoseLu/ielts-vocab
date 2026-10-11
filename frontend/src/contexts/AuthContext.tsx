@@ -17,6 +17,7 @@ import {
   UserSchema,
   setAuthSessionActive,
 } from '../lib'
+import { ensureAppStorageSchemaVersion } from '../lib/appStorageVersion'
 import { runLegacyLocalStorageMigration } from '../lib/localStorageMigration'
 import { useToast } from './ToastContext'
 
@@ -105,6 +106,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // On mount: validate cookie with the server; fall back to cached user while loading
   useEffect(() => {
+    ensureAppStorageSchemaVersion()
+
     const cached = localStorage.getItem(STORAGE_KEYS.AUTH_USER)
     if (!cached) {
       setAuthSessionActive(false)

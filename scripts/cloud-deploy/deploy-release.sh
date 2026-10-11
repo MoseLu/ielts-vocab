@@ -53,6 +53,7 @@ rollback_after_failure() {
 trap 'status=$?; if (( status != 0 )); then rollback_after_failure; fi; clear_deploy_lock' EXIT
 
 require_command git
+require_command timeout
 require_command tar
 require_command systemctl
 require_command curl

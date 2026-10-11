@@ -28,6 +28,7 @@ interface QuickMemorySummaryProps {
   reviewHasMore?: boolean
   onContinueReview?: () => void
   chapterGroup?: PracticeGroupWindow | null
+  chapterTotalCount?: number
   onContinueChapterGroup?: () => void
   buildChapterPath?: (chapterId: string | number) => string
   sessionDurationSeconds?: number | null
@@ -48,6 +49,7 @@ export function QuickMemorySummary({
   reviewHasMore,
   onContinueReview,
   chapterGroup,
+  chapterTotalCount,
   onContinueChapterGroup,
   buildChapterPath,
   sessionDurationSeconds,
@@ -64,6 +66,8 @@ export function QuickMemorySummary({
     ? bookChapters[currentChapterIndex + 1]
     : null
   const accuracy = results.length > 0 ? Math.round((known.length / results.length) * 100) : 0
+  const totalCount = Math.max(queue.length, chapterGroup?.total ?? 0, chapterTotalCount ?? 0)
+  const showTotalCount = totalCount > results.length
   const sessionDurationText = sessionDurationSeconds != null
     ? formatSessionDuration(sessionDurationSeconds)
     : null
@@ -76,6 +80,16 @@ export function QuickMemorySummary({
     <div className="qm-summary">
       <div className="qm-summary-title">本轮完成</div>
       <div className="qm-summary-stats">
+        <div className="qm-stat">
+          <span className="qm-stat-num">{results.length}</span>
+          <span className="qm-stat-label">本轮已答</span>
+        </div>
+        {showTotalCount && (
+          <div className="qm-stat">
+            <span className="qm-stat-num">{totalCount}</span>
+            <span className="qm-stat-label">本章总词</span>
+          </div>
+        )}
         <div className="qm-stat qm-stat-known">
           <span className="qm-stat-num">{known.length}</span>
           <span className="qm-stat-label">认识</span>

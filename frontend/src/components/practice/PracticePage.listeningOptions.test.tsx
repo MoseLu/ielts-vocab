@@ -18,45 +18,46 @@ const useFavoriteWordsMock = vi.fn(() => ({
   toggleFavorite: vi.fn(),
 }))
 vi.stubGlobal('fetch', fetchMock)
+
+vi.mock('../../lib/smartMode', async () => {
+  const actual = await vi.importActual<typeof import('../../lib/smartMode')>('../../lib/smartMode')
+  return {
+    ...actual,
+    chooseSmartDimension: vi.fn(() => 'meaning'),
+  }
+})
+
 const fetchFixturePatterns = [/^\/api\/vocabulary\/day\//, /^\/api\/books\/word-list\?/, /^\/api\/books\/[^/]+\/chapters$/]
 const backgroundPracticeWrites = new Set(['/api/ai/quick-memory/sync', '/api/ai/practice/game/attempt'])
 async function apiFetchFixture(url: string, ...args: unknown[]) {
   const requestUrl = String(url)
   if (fetchFixturePatterns.some(pattern => pattern.test(requestUrl))) return (await fetch(requestUrl)).json()
+  if (requestUrl === '/api/ai/log-session') {
+    const payload = args[0]
+    const body = typeof (payload as { body?: unknown } | undefined)?.body === 'string'
+      ? JSON.parse((payload as { body: string }).body)
+      : payload
+    logSessionMock(body)
+    return {}
+  }
   if (backgroundPracticeWrites.has(requestUrl)) return {}
   return apiFetchMock(url, ...args)
 }
-vi.mock('../../hooks/useSpeechRecognition', () => ({
-  useSpeechRecognition: () => ({
+vi.mock('../../hooks', async () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const actual = await vi.importActual<any>('../../hooks')
+  return {
+    ...actual,
+    logSession: (...args: unknown[]) => logSessionMock(...args),
+    startSession: (...args: unknown[]) => startSessionMock(...args),
+    useSpeechRecognition: () => ({
     isConnected: false,
     isRecording: false,
     startRecording: vi.fn(),
     stopRecording: vi.fn(),
-  }),
-}))
-vi.mock('../../contexts/AIChatContext', () => ({
-  setGlobalLearningContext: vi.fn(),
-}))
-vi.mock('../../lib/smartMode', () => ({
-  loadSmartStats: vi.fn(() => ({})),
-  recordWordResult: vi.fn(),
-  chooseSmartDimension: vi.fn(() => 'meaning'),
-  buildSmartQueue: vi.fn((words: string[]) => words.map((_, index) => index)),
-  syncSmartStatsToBackend: vi.fn(),
-  loadSmartStatsFromBackend: vi.fn(),
-}))
-vi.mock('../../hooks/useAIChat', () => ({
-  PASSIVE_STUDY_SESSION_MIN_SECONDS: 30,
-  recordModeAnswer: vi.fn(),
-  resolveStudySessionDurationSeconds: (data: { startedAt: number; endedAt?: number; durationSeconds?: number }) =>
-    data.durationSeconds ?? Math.max(0, Math.round(((data.endedAt ?? Date.now()) - data.startedAt) / 1000)),
-  logSession: (...args: unknown[]) => logSessionMock(...args),
-  startSession: (...args: unknown[]) => startSessionMock(...args),
-  cancelSession: vi.fn(),
-  flushStudySessionOnPageHide: vi.fn(),
-  touchStudySessionActivity: vi.fn(),
-  updateStudySessionSnapshot: vi.fn(),
-}))
+  })
+  }
+})
 vi.mock('../../features/vocabulary/hooks', async () => {
   const actual = await vi.importActual<typeof import('../../features/vocabulary/hooks')>('../../features/vocabulary/hooks')
   return {
@@ -242,6 +243,52 @@ describe('PracticePage listening options loading', () => {
       apiFetchMock.mock.calls.every(([url]) => !String(url).includes('/api/ai/similar-words')),
     ).toBe(true)
   })
+
+  it('falls back to generated distractors when all preset listening confusables are inflected forms', async () => {
+    localStorage.setItem('app_settings', JSON.stringify({ shuffle: false }))
+    const vocabulary = [
+      {
+        word: 'guide',
+        phonetic: '/gaid/',
+        pos: 'n.',
+        definition: '向导',
+        listening_confusables: [
+          { word: 'guiding', phonetic: '/ˈgaɪdɪŋ/', pos: 'v.', definition: '引导；“guide”的现在分词' },
+          { word: 'guided', phonetic: '/ˈgaɪdɪd/', pos: 'v.', definition: '有指导的；“guide”的过去式和过去分词' },
+          { word: 'guides', phonetic: '/gaɪdz/', pos: 'n.', definition: '向导；“guide”的复数' },
+        ],
+      },
+      { word: 'guy', phonetic: '/gai/', pos: 'n.', definition: '家伙' },
+      { word: 'guise', phonetic: '/gaiz/', pos: 'n.', definition: '伪装' },
+      { word: 'guile', phonetic: '/gail/', pos: 'n.', definition: '狡诈' },
+      { word: 'guild', phonetic: '/gild/', pos: 'n.', definition: '协会' },
+    ]
+    fetchMock.mockResolvedValue({
+      json: async () => ({ vocabulary }),
+    })
+    apiFetchMock.mockImplementation((url: string) => {
+      if (url === '/api/ai/learner-profile') return Promise.resolve({})
+      if (url === '/api/progress') return Promise.resolve({})
+      throw new Error(`Unexpected url: ${url}`)
+    })
+    render(
+      <MemoryRouter>
+        <PracticePage currentDay={1} mode="listening" onModeChange={() => {}} onDayChange={() => {}} />
+      </MemoryRouter>,
+    )
+    await waitFor(() => {
+      expect(screen.getByTestId('options-state')).toHaveTextContent('ready:guide:')
+    })
+    expect(screen.getByTestId('options-state')).toHaveTextContent('向导')
+    expect(screen.getByTestId('options-state')).toHaveTextContent('家伙')
+    expect(screen.getByTestId('options-state')).toHaveTextContent('伪装')
+    expect(screen.getByTestId('options-state')).toHaveTextContent('狡诈')
+    expect(screen.getByTestId('options-state')).not.toHaveTextContent('现在分词')
+    expect(screen.getByTestId('options-state')).not.toHaveTextContent('过去式')
+    expect(screen.getByTestId('options-state')).not.toHaveTextContent('复数')
+    expect(screen.getByTestId('options-state')).not.toHaveTextContent('协会')
+  })
+
   it('falls back to meaning mode for custom-book chapters without listening presets', async () => {
     localStorage.setItem('app_settings', JSON.stringify({ shuffle: false }))
     const onModeChange = vi.fn()
@@ -431,19 +478,19 @@ describe('PracticePage listening options loading', () => {
     )
     await flushRender()
     expect(screen.getByTestId('options-state')).toHaveTextContent('ready:guide:')
-    fireEvent.click(screen.getByRole('button', { name: 'answer-correct' }))
     vi.setSystemTime(new Date('2026-04-07T00:01:04.000Z'))
     await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'answer-correct' }))
       await vi.advanceTimersByTimeAsync(1300)
       await Promise.resolve()
       await Promise.resolve()
     })
     expect(screen.getByText('本轮完成')).toBeInTheDocument()
     expect(screen.getByText('本章练习')).toBeInTheDocument()
-    expect(screen.getByText('1分5秒')).toBeInTheDocument()
+    expect(screen.getByText('1秒')).toBeInTheDocument()
     expect(logSessionMock).toHaveBeenCalledWith(expect.objectContaining({
       chapterId: '1',
-      durationSeconds: 65,
+      durationSeconds: 1,
     }))
   })
 })

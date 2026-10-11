@@ -130,6 +130,7 @@ export function usePracticeSpecialModeData({
     setVocabulary,
     setWordStatuses,
     setWrongCount,
+    settings,
     settings.reviewInterval,
     settings.reviewLimit,
     settings.reviewLimitCustomized,

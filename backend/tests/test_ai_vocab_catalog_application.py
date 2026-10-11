@@ -63,7 +63,7 @@ def test_resolve_quick_memory_vocab_entry_applies_phonetic_override_to_lightweig
         }],
     }), encoding='utf-8')
     (tmp_path / 'phonetic_overrides.json').write_text(
-        json.dumps({'secretary': '/ˈsekrətəri/'}),
+        json.dumps({'secretary': '/ˈsekrətri/'}),
         encoding='utf-8',
     )
 
@@ -94,4 +94,4 @@ def test_resolve_quick_memory_vocab_entry_applies_phonetic_override_to_lightweig
     )
 
     assert item is not None
-    assert item['phonetic'] == '/ˈsekrətəri/'
+    assert item['phonetic'] == '/ˈsekrətri/'

@@ -2,25 +2,11 @@ import { Suspense, lazy, useEffect, useState } from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { useAuth, useToast } from '../contexts'
 import AuthPage from '../components/auth/page/AuthPage'
-import CreateCustomBookPage from '../components/books/page/CreateCustomBookPage'
-import ErrorsPage from '../components/errors/page/ErrorsPage'
 import Toast from '../components/ui/Toast'
 import { Loading } from '../components/ui/Loading'
 import { ScrollToTop } from './ScrollToTop'
 import LeftSidebar from '../components/layout/navigation/LeftSidebar'
-import AdminDashboard from '../components/admin/page/AdminDashboard'
-import ExamsLibraryPage from '../components/exams/page/ExamsLibraryPage'
-import GameComingSoonPage from '../components/game/page/GameComingSoonPage'
-import HomePage from '../components/home/page/HomePage'
-import LearningJournalPage from '../components/journal/page/LearningJournalPage'
-import NotFoundPage from '../components/not-found/page/NotFoundPage'
-import ConfusableMatchPage from '../components/practice/ConfusableMatchPage'
 import GlobalBugScreenshotShortcut from '../components/profile/wishes/GlobalBugScreenshotShortcut'
-import ProfilePage from '../components/profile/page/ProfilePage'
-import StatsPage from '../components/stats/page/StatsPage'
-import TermsPage from '../components/terms/page/TermsPage'
-import VocabBookPage from '../components/books/page/VocabBookPage'
-import VocabTestPage from '../components/vocab-test/page/VocabTestPage'
 import type { PracticeMode as HeaderPracticeMode } from '../components/layout/navigation/Header'
 import { PracticeRouteElement } from './PracticeRouteElement'
 import { AuthenticatedRoute, GuestOnlyRoute } from './routeGuards'
@@ -31,6 +17,20 @@ const BottomNav = lazy(() => import('../components/layout/navigation/BottomNav')
 const GlobalWordSearch = lazy(() => import('../components/layout/navigation/GlobalWordSearch'))
 const Header = lazy(() => import('../components/layout/navigation/Header'))
 const SelectionWordLookup = lazy(() => import('../components/layout/navigation/SelectionWordLookup'))
+const CreateCustomBookPage = lazy(() => import('../components/books/page/CreateCustomBookPage'))
+const ErrorsPage = lazy(() => import('../components/errors/page/ErrorsPage'))
+const AdminDashboard = lazy(() => import('../components/admin/page/AdminDashboard'))
+const ExamsLibraryPage = lazy(() => import('../components/exams/page/ExamsLibraryPage'))
+const GameComingSoonPage = lazy(() => import('../components/game/page/GameComingSoonPage'))
+const HomePage = lazy(() => import('../components/home/page/HomePage'))
+const LearningJournalPage = lazy(() => import('../components/journal/page/LearningJournalPage'))
+const NotFoundPage = lazy(() => import('../components/not-found/page/NotFoundPage'))
+const ConfusableMatchPage = lazy(() => import('../components/practice/ConfusableMatchPage'))
+const ProfilePage = lazy(() => import('../components/profile/page/ProfilePage'))
+const StatsPage = lazy(() => import('../components/stats/page/StatsPage'))
+const TermsPage = lazy(() => import('../components/terms/page/TermsPage'))
+const VocabBookPage = lazy(() => import('../components/books/page/VocabBookPage'))
+const VocabTestPage = lazy(() => import('../components/vocab-test/page/VocabTestPage'))
 
 interface AppRoutesProps {
   mode: string
@@ -74,8 +74,9 @@ export function AppRoutes({
   const isExamAttemptSurface = /^\/exams\/\d+$/.test(location.pathname)
   const isLegacySpeakingRoute = location.pathname === '/speaking'
   const isPracticeSurface = isPractice || isGame || isExamAttemptSurface || isLegacySpeakingRoute
+  const shouldHideBottomNav = isGame || isExamAttemptSurface || isLegacySpeakingRoute
   const isSpecialPage = SPECIAL_PAGES.includes(location.pathname)
-  const shouldShowBottomNav = Boolean(user) && !isPracticeSurface && !isSpecialPage
+  const shouldShowBottomNav = Boolean(user) && !shouldHideBottomNav && !isSpecialPage
   const shouldOffsetFloatingChrome = shouldShowBottomNav
   const [chromeReady, setChromeReady] = useState(false)
 

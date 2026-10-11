@@ -1,0 +1,213 @@
+@use '../../utils/mixins' as *;
+
+/* ── History Card Grid ── */
+
+.journal-doc-shell--history {
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  padding: var(--size-16);
+  overflow-y: auto;
+}
+
+.journal-history-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--size-12);
+  align-items: start;
+  padding-bottom: var(--size-16);
+}
+
+.journal-history-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--size-8);
+  padding: var(--size-14);
+  border-radius: var(--size-12);
+  border: var(--size-1) solid var(--border-subtle);
+  background: var(--surface-base);
+  text-align: left;
+  cursor: pointer;
+  align-self: start;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
+
+  &:hover {
+    border-color: color-mix(in srgb, var(--accent) var(--mix-20), var(--border));
+    box-shadow: var(--shadow-soft);
+    transform: translateY(calc(var(--size-2) * -1));
+  }
+}
+
+.journal-history-card__date {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 0.02em;
+}
+
+.journal-history-card__preview {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.journal-history-card__images {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--size-8);
+}
+
+.journal-history-card__image {
+  display: block;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: var(--size-10);
+  border: var(--size-1) solid var(--border-subtle);
+  background: var(--surface-muted);
+}
+
+.journal-history-card__image img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.journal-history-card__time {
+  font-size: 0.76rem;
+  color: var(--text-tertiary);
+  margin-top: auto;
+}
+
+/* ── Load More ── */
+
+.journal-history-more {
+  display: flex;
+  justify-content: center;
+  padding: var(--size-8) 0;
+}
+
+.journal-history-more-btn {
+  @include control-button(var(--size-40), 0 var(--size-20), var(--size-10), var(--size-1) solid var(--border), transparent, var(--text-secondary), 0.88rem, 600);
+
+  &:hover:not(:disabled) {
+    border-color: var(--accent);
+    color: var(--text-primary);
+    background: var(--surface-hover);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+/* ── History Detail View ── */
+
+.journal-doc-shell--history-detail {
+  grid-template-columns: minmax(0, 1fr);
+  display: flex;
+  flex-direction: column;
+}
+
+.journal-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--size-6);
+  padding: var(--size-8) var(--size-12);
+  border: none;
+  border-radius: var(--size-8);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color var(--transition-fast), background var(--transition-fast);
+
+  &:hover {
+    color: var(--accent);
+    background: var(--surface-hover);
+  }
+}
+
+.journal-doc-main--history {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--size-16) var(--size-20);
+
+  .journal-doc-hero {
+    padding-bottom: var(--size-12);
+    margin-bottom: var(--size-12);
+    border-bottom: var(--size-1) solid var(--border-subtle);
+  }
+
+  .journal-doc-body {
+    flex: 1;
+    font-size: 0.95rem;
+    line-height: 1.8;
+  }
+}
+
+.journal-history-detail-images {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(var(--size-112), var(--size-160)));
+  gap: var(--size-12);
+  margin-bottom: var(--size-16);
+}
+
+.journal-history-detail-images figure {
+  margin: 0;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: var(--size-12);
+  border: var(--size-1) solid var(--border-subtle);
+  background: var(--surface-muted);
+}
+
+.journal-history-detail-images img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ── History Skeleton ── */
+
+.journal-history-skeleton {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--size-12);
+}
+
+.journal-history-skeleton-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--size-8);
+  padding: var(--size-14);
+  border-radius: var(--size-12);
+  border: var(--size-1) solid var(--border-subtle);
+  background: var(--surface-base);
+}
+
+/* ── Responsive ── */
+
+@media (max-width: 768px) {
+  .journal-history-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .journal-history-skeleton {
+    grid-template-columns: 1fr;
+  }
+
+  .journal-history-detail-images {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}

@@ -3,6 +3,8 @@ from __future__ import annotations
 import gzip
 import hashlib
 import importlib.util
+import os
+import subprocess
 from pathlib import Path
 
 
@@ -149,9 +151,13 @@ def test_vite_supports_configurable_frontend_asset_base_url():
 def test_release_common_uploads_frontend_assets_to_oss_after_build():
     script = _read('scripts/cloud-deploy/release-common.sh')
 
+    assert 'DEPLOY_GIT_FETCH_TIMEOUT_SECONDS' in script
+    assert 'ServerAliveInterval=10' in script
+    assert 'failed or timed out after %ss' in script
     assert 'upload-frontend-assets-to-oss.py' in script
     assert 'FRONTEND_ASSET_OSS_ENABLED' in script
     assert 'FRONTEND_ASSET_BASE_URL=' in script
+    assert 'require_frontend_asset_base "${asset_base}" "deploy frontend build"' in script
     assert 'upload_frontend_assets_to_oss "${release_dir}"' in script
 
 
@@ -161,6 +167,7 @@ def test_release_artifact_path_builds_with_and_uploads_oss_assets():
     workflow = _read('.github/workflows/deploy-production.yml')
 
     assert 'resolve_frontend_asset_base' in build_script
+    assert 'RELEASE_ARTIFACT_REQUIRE_FRONTEND_ASSET_BASE:-true' in build_script
     assert 'FRONTEND_ASSET_BASE_URL="${asset_base}"' in build_script
     assert 'VITE_ASSET_BASE_URL="${asset_base}"' in build_script
     assert 'frontend_asset_base_url=${asset_base}' in build_script
@@ -170,16 +177,46 @@ def test_release_artifact_path_builds_with_and_uploads_oss_assets():
     assert '! -name index.html -exec rm -rf {} +' in build_script
     assert 'frontend_assets_uploaded_to_oss' in deploy_script
     assert 'Skipping frontend OSS upload; artifact already uploaded assets' in deploy_script
-    assert 'rsync --partial --progress' in workflow
+    assert 'rsync --partial --append-verify --progress' in workflow
     assert "cat > '${remote_tmp}/ielts-vocab-release.tgz'" not in workflow
     assert 'artifact_upload_started=' in workflow
     assert 'FRONTEND_ASSET_OSS_PUBLIC_BASE_URL' in workflow
+    assert 'PUBLIC_WEB_ORIGINS' in workflow
     assert 'FRONTEND_ASSET_OSS_PREFIX' in workflow
     assert 'FRONTEND_ASSET_OSS_CORS_ORIGINS' in workflow
     assert 'FRONTEND_ASSET_OSS_CONNECT_TIMEOUT_SECONDS' in workflow
     assert 'FRONTEND_ASSET_OSS_UPLOAD_RETRY_ATTEMPTS' in workflow
     assert 'AXI_ALIYUN_OSS_ACCESS_KEY_ID' in workflow
     assert 'AXI_ALIYUN_OSS_PUBLIC_BUCKET' in workflow
+
+
+def test_release_artifact_builder_rejects_missing_asset_base_by_default(tmp_path):
+    env = os.environ.copy()
+    for key in (
+        'ALLOW_EMPTY_FRONTEND_ASSET_BASE',
+        'FRONTEND_ASSET_BASE_URL',
+        'FRONTEND_ASSET_OSS_PUBLIC_BASE_URL',
+        'VITE_ASSET_BASE_URL',
+    ):
+        env.pop(key, None)
+
+    result = subprocess.run(
+        [
+            'bash',
+            str(REPO_ROOT / 'scripts/cloud-deploy/build-release-artifact.sh'),
+            'HEAD',
+            str(tmp_path / 'release.tgz'),
+        ],
+        cwd=REPO_ROOT,
+        env=env,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+
+    assert result.returncode != 0
+    assert 'release artifact requires FRONTEND_ASSET_BASE_URL' in result.stdout + result.stderr
 
 
 def test_frontend_asset_public_header_verification_rejects_download_headers(monkeypatch):
@@ -453,3 +490,6 @@ def test_nginx_template_compresses_and_caches_static_assets():
     assert 'location /assets/' in config
     assert 'expires 1y;' in config
     assert 'Cache-Control "public, max-age=31536000, immutable"' in config
+    assert 'location = /index.html' in config
+    assert 'Cache-Control "no-cache, max-age=0, must-revalidate" always' in config
+    assert 'add_header Expires "0" always' in config

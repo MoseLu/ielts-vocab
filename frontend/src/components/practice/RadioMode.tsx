@@ -121,9 +121,10 @@ export default function RadioMode({
       if (radioRepeatTimerRef.current) clearTimeout(radioRepeatTimerRef.current)
       stopAudio()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- one-time ref seed on mount
   }, [])
 
-  const handleRadioSkipPrev = async () => {
+  const handleRadioSkipPrev = useCallback(async () => {
     await onSessionInteraction?.()
     const newIdx = Math.max(0, radioIndexRef.current - 1)
     radioGenRef.current++
@@ -136,9 +137,10 @@ export default function RadioMode({
       radioActiveRef.current = true
       radioPlayFrom(newIdx)
     }
-  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- stopAudio is a stable useCallback
+  }, [onSessionInteraction, radioPaused, radioPlayFrom, radioStopped])
 
-  const handleRadioSkipNext = async () => {
+  const handleRadioSkipNext = useCallback(async () => {
     await onSessionInteraction?.()
     const newIdx = Math.min(queueRef.current.length - 1, radioIndexRef.current + 1)
     radioGenRef.current++
@@ -150,8 +152,8 @@ export default function RadioMode({
     if (!radioPaused && !radioStopped) {
       radioActiveRef.current = true
       radioPlayFrom(newIdx)
-    }
-  }
+    }// eslint-disable-next-line react-hooks/exhaustive-deps -- stopAudio is a stable useCallback
+  }, [onSessionInteraction, queueRef, radioPaused, radioPlayFrom, radioStopped])
 
   const handleRadioPause = async () => {
     await onSessionInteraction?.()

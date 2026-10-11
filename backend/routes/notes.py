@@ -6,6 +6,7 @@ load_split_module_files(
     (
         'notes_routes/summary_generation.py',
         'notes_routes/summary_jobs_and_exports.py',
+        'notes_routes/journal_entries.py',
     ),
     globals(),
 )

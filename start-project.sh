@@ -97,7 +97,7 @@ require_command() {
 
 ensure_runtime() {
   if [[ ! -x "${runtime_prefix}/bin/python" ]]; then
-    "${setup_script}"
+    bash "${setup_script}"
   fi
   PATH="${runtime_prefix}/bin:${PATH}"
   export PATH
@@ -227,7 +227,7 @@ else
   if [[ "${skip_rabbit}" == "true" ]]; then
     microservices_args+=(--skip-rabbit)
   fi
-  "${microservices_script}" "${microservices_args[@]}"
+  bash "${microservices_script}" "${microservices_args[@]}"
   export BACKEND_PORT="${gateway_port}"
   export VITE_API_PROXY_TARGET="http://127.0.0.1:${gateway_port}"
   wait_http_ready 'gateway ready' "http://127.0.0.1:${gateway_port}/health"

@@ -87,3 +87,30 @@ def test_summary_prompt_uses_local_prompt_run_stamp():
     )
 
     assert '16:11 AI 助手问答' in prompt
+
+
+def test_summary_prompt_includes_manual_recap():
+    prompt = build_summary_prompt(
+        target_date='2026-04-09',
+        notes_list=[],
+        sessions=[],
+        wrong_words=[],
+        learning_snapshot={
+            'today_words': 12,
+            'today_sessions': 2,
+            'today_prompt_runs': 0,
+            'today_duration': 360,
+            'today_accuracy': 75,
+            'streak_days': 3,
+            'today_mode_breakdown': [],
+            'weakest_mode': None,
+        },
+        manual_recap={
+            'date': '2026-04-09',
+            'content': '今天完成了听力第 3 章，meaning 模式还需要查漏补缺。',
+        },
+    )
+
+    assert '用户手动复盘' in prompt
+    assert '今天完成了听力第 3 章' in prompt
+    assert '必须优先围绕复盘内容和学习指标生成' in prompt

@@ -12,20 +12,25 @@ const touchStudySessionActivityMock = vi.fn()
 const updateStudySessionSnapshotMock = vi.fn()
 const syncSmartStatsToBackendMock = vi.fn()
 
-vi.mock('../../../hooks/useAIChat', () => ({
-  PASSIVE_STUDY_SESSION_MIN_SECONDS: 30,
-  cancelSession: (...args: unknown[]) => cancelSessionMock(...args),
-  flushStudySessionOnPageHide: (...args: unknown[]) => flushStudySessionOnPageHideMock(...args),
-  logSession: (...args: unknown[]) => logSessionMock(...args),
-  markStudySessionRecoveryHandled: (...args: unknown[]) => markStudySessionRecoveryHandledMock(...args),
-  prepareStudySessionForLearningAction: undefined,
-  finalizeStudySessionSegment: undefined,
-  isStudySessionActive: undefined,
-  resolveStudySessionDurationSeconds: (...args: unknown[]) => resolveStudySessionDurationSecondsMock(...args),
-  startSession: (...args: unknown[]) => startSessionMock(...args),
-  touchStudySessionActivity: (...args: unknown[]) => touchStudySessionActivityMock(...args),
-  updateStudySessionSnapshot: (...args: unknown[]) => updateStudySessionSnapshotMock(...args),
-}))
+vi.mock('../../../hooks', async () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const actual = await vi.importActual<any>('../../../hooks')
+  return {
+    ...actual,
+    PASSIVE_STUDY_SESSION_MIN_SECONDS: 30,
+    cancelSession: (...args: unknown[]) => cancelSessionMock(...args),
+    flushStudySessionOnPageHide: (...args: unknown[]) => flushStudySessionOnPageHideMock(...args),
+    logSession: (...args: unknown[]) => logSessionMock(...args),
+    markStudySessionRecoveryHandled: (...args: unknown[]) => markStudySessionRecoveryHandledMock(...args),
+    prepareStudySessionForLearningAction: undefined,
+    finalizeStudySessionSegment: undefined,
+    isStudySessionActive: undefined,
+    resolveStudySessionDurationSeconds: (...args: unknown[]) => resolveStudySessionDurationSecondsMock(...args),
+    startSession: (...args: unknown[]) => startSessionMock(...args),
+    touchStudySessionActivity: (...args: unknown[]) => touchStudySessionActivityMock(...args),
+    updateStudySessionSnapshot: (...args: unknown[]) => updateStudySessionSnapshotMock(...args),
+  }
+})
 
 vi.mock('../../../lib/appSettings', () => ({
   APP_SETTINGS_CHANGED_EVENT: 'app-settings-changed',

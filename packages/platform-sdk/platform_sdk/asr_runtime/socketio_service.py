@@ -6,6 +6,8 @@ import os
 from flask import Flask, jsonify
 from flask_socketio import SocketIO
 
+from platform_sdk.cors_policy import build_socketio_cors_allowed_origins
+
 from .base import SOCKET_NAMESPACE, get_dashscope_api_key
 from .realtime_sessions import get_active_session_count, get_live_session_snapshot
 from .realtime_socketio import register_socketio_events
@@ -35,7 +37,7 @@ def create_socketio_service(
 
     socketio = SocketIO(
         app,
-        cors_allowed_origins='*',
+        cors_allowed_origins=build_socketio_cors_allowed_origins(),
         async_mode=async_mode,
         ping_timeout=60,
         ping_interval=25,

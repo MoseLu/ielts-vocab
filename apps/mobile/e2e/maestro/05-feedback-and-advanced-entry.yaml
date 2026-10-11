@@ -1,0 +1,24 @@
+appId: com.axiomaticworld.ieltsvocab
+---
+- runFlow: _login.yaml
+- tapOn:
+    id: tab.practice
+- extendedWaitUntil:
+    visible:
+      id: screen.practice
+    timeout: 10000
+- tapOn:
+    id: practice.entry.speaking
+- extendedWaitUntil:
+    visible:
+      id: screen.exams
+    timeout: 10000
+- pressKey: Back
+- tapOn:
+    id: tab.profile
+- tapOn: 设置
+- tapOn: 意见反馈
+- extendedWaitUntil:
+    visible:
+      id: feedback.title
+    timeout: 10000

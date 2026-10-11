@@ -306,6 +306,15 @@
     width: 100%;
   }
 
+  .journal-date-range-field {
+    width: 100%;
+  }
+
+  .journal-date-range-segment {
+    width: auto;
+    min-width: 0;
+  }
+
   .journal-filter-label {
     min-width: var(--size-52);
   }
@@ -364,5 +373,4 @@
     font-size: 1.45rem;
   }
 }
-
 

@@ -1,0 +1,15 @@
+appId: com.axiomaticworld.ieltsvocab
+---
+- runFlow: _login.yaml
+- tapOn:
+    id: tab.practice
+- extendedWaitUntil:
+    visible:
+      id: screen.practice
+    timeout: 10000
+- tapOn:
+    id: practice.entry.errors
+- extendedWaitUntil:
+    visible:
+      id: practice.submit
+    timeout: 30000

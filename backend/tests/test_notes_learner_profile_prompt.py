@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 
 import jwt
 
-from models import User, UserLearningEvent, UserLearningNote, UserStudySession, UserWrongWord, db
+from models import User, UserJournalNote, UserLearningEvent, UserLearningNote, UserStudySession, UserWrongWord, db
 
 
 def _make_user_and_token(app, username: str):
@@ -69,6 +69,11 @@ def test_generate_summary_prompt_includes_unified_learner_profile(client, app, m
                 word_context='kind',
                 created_at=datetime(2026, 3, 30, 12, 0, 0),
             ),
+            UserJournalNote(
+                user_id=user_id,
+                date='2026-03-30',
+                content='今天完成了 listening 复盘，kind 相关表达还要查漏补缺。',
+            ),
             UserWrongWord(
                 user_id=user_id,
                 word='kind',
@@ -120,4 +125,6 @@ def test_generate_summary_prompt_includes_unified_learner_profile(client, app, m
     assert '薄弱维度' in prompt
     assert '今日统一行为流' in prompt
     assert '近期关键动作' in prompt
+    assert '用户手动复盘' in prompt
+    assert 'kind 相关表达还要查漏补缺' in prompt
     assert 'kind of and a kind of' in prompt

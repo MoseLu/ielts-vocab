@@ -1,12 +1,21 @@
-# ── 推荐 nginx 配置（适用于 natapp + vite preview + split backend 架构）──
+# ── 推荐 nginx 配置（适用于项目子域名 + vite preview + split backend 架构）──
 # 参考此文件配置你本机的 nginx
 
 server {
     listen 80;
-    server_name axiomaticworld.com;
+    server_name ielts.axiomaticworld.com axiomaticworld.com;
 
     # 增大请求体上限（头像上传等）
     client_max_body_size 10m;
+    server_tokens off;
+
+    add_header Content-Security-Policy "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: http: https:; font-src 'self' data:; connect-src 'self' http: https: ws: wss:; media-src 'self' data: blob: http: https:; worker-src 'self' blob:; manifest-src 'self'" always;
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+    add_header X-Frame-Options "DENY" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    add_header Permissions-Policy "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(self), payment=(), usb=(), fullscreen=(self)" always;
+    add_header Cross-Origin-Opener-Policy "same-origin" always;
 
     # ── API → gateway-bff:8000 ────────────────────────────────────
     location /api/ {

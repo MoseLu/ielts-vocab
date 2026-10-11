@@ -1,4 +1,5 @@
 import React from 'react'
+import { ChevronRight } from 'lucide-react-native'
 import { Pressable, Text, View } from 'react-native'
 import type { PracticeMode } from '@ielts-vocab/app-core'
 import { Card, Heading, Meta, PrimaryButton, Row } from '../components/primitives'
@@ -57,32 +58,61 @@ export const PRACTICE_GROUPS: PracticeModeGroup[] = [
   },
 ]
 
+const PRACTICE_ENTRY_SHORTCUTS = PRACTICE_GROUPS.flatMap(group => group.entries)
+
 export function PracticeEntryPanel({ onOpen }: { onOpen: (item: PracticeEntry) => void }) {
   return (
     <>
       <Card style={styles.practiceHero}>
         <StickerLayer slots={practiceEntryStickerSlots} />
-        <Text style={styles.practiceHeroEyebrow}>Practice System</Text>
-        <Heading>今天先选一个学习动作</Heading>
-        <Meta>基础训练、艾宾浩斯、错词恢复和听说专项都在这里；五维闯关仍保持独立高级入口。</Meta>
+        <Text style={styles.practiceHeroEyebrow}>练习中心</Text>
+        <Heading>选择一个练习模式</Heading>
+        <Meta>底部快捷菜单可直接进入常用练习，这里保留完整模式和范围切换。</Meta>
+        <View style={styles.modeShortcutRail}>
+          {PRACTICE_ENTRY_SHORTCUTS.map(item => (
+            <Pressable
+              accessibilityLabel={`快捷练习-${item.label}`}
+              accessibilityRole="button"
+              key={item.key}
+              onPress={() => onOpen(item)}
+              style={({ pressed }) => [styles.modeShortcut, pressed ? styles.modeShortcutPressed : null]}
+              testID={`practice.modeShortcut.${item.key}`}
+            >
+              <View style={styles.modeShortcutIcon}>
+                <Sticker height={46} keyName={modeStickerKeys[item.key]} width={46} />
+              </View>
+              <Text numberOfLines={1} style={styles.modeShortcutLabel}>{item.label}</Text>
+            </Pressable>
+          ))}
+        </View>
       </Card>
       {PRACTICE_GROUPS.map(group => (
         <View key={group.key} style={styles.entryGroup}>
           <View style={styles.entryGroupHeader}>
             <Text style={styles.entryGroupTitle}>{group.title}</Text>
-            <Text style={styles.entryGroupSubtitle}>{group.subtitle}</Text>
+            <Text numberOfLines={1} style={styles.entryGroupSubtitle}>{group.subtitle}</Text>
           </View>
           <View style={styles.entryGrid}>
             {group.entries.map(item => (
-              <Pressable key={item.key} accessibilityRole="button" onPress={() => onOpen(item)} style={styles.entryTile}>
-                <Sticker height={68} keyName={modeStickerKeys[item.key]} width={68} />
-                <Text style={styles.entryTitle}>{item.label}</Text>
-                <Text numberOfLines={2} style={styles.entrySubtitle}>{item.subtitle}</Text>
-                <View style={styles.entryTags}>
-                  {item.tags.map(tag => (
-                    <Text key={tag} style={styles.entryTag}>{tag}</Text>
-                  ))}
+              <Pressable
+                accessibilityLabel={`练习入口-${item.label}`}
+                accessibilityRole="button"
+                key={item.key}
+                onPress={() => onOpen(item)}
+                style={({ pressed }) => [styles.entryTile, pressed ? styles.entryTilePressed : null]}
+                testID={`practice.entry.${item.key}`}
+              >
+                <Sticker height={52} keyName={modeStickerKeys[item.key]} width={52} />
+                <View style={styles.entryCopy}>
+                  <Text style={styles.entryTitle}>{item.label}</Text>
+                  <Text numberOfLines={1} style={styles.entrySubtitle}>{item.subtitle}</Text>
+                  <View style={styles.entryTags}>
+                    {item.tags.slice(0, 2).map(tag => (
+                      <Text key={tag} style={styles.entryTag}>{tag}</Text>
+                    ))}
+                  </View>
                 </View>
+                <ChevronRight color="#A49286" size={18} strokeWidth={2.4} />
               </Pressable>
             ))}
           </View>
@@ -107,8 +137,8 @@ export function PracticeCompletionCard({
       <Heading>本轮完成</Heading>
       <Meta>{wordCount} 个词已过一遍，可从顶部状态栏切换模式或范围。</Meta>
       <Row>
-        <PrimaryButton label="再来一轮" onPress={onRestart} />
-        <PrimaryButton label="换范围" tone="neutral" onPress={onChangeScope} />
+        <PrimaryButton label="再来一轮" onPress={onRestart} testID="practice.restart" />
+        <PrimaryButton label="换范围" tone="neutral" onPress={onChangeScope} testID="practice.changeScope" />
       </Row>
     </Card>
   )

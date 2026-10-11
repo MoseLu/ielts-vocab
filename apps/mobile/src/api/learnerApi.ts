@@ -2,6 +2,7 @@ import {
   ExamPaperDetailSchema,
   ExamPaperSummarySchema,
   HomeTodoPayloadSchema,
+  JournalEntrySchema,
   JournalSummarySchema,
   LearningNoteSchema,
   LearningStatsPayloadSchema,
@@ -9,20 +10,30 @@ import {
   MobileChapterSchema,
   MobileWordSchema,
   WrongWordSchema,
+  buildQuickMemoryReviewQueuePath,
+  normalizeSmartStatsPayload,
   parseArray,
   type ExamPaperDetail,
   type ExamPaperSummary,
   type HomeTodoPayload,
+  type JournalEntry,
   type JournalSummary,
   type LearningNote,
   type LearningStatsPayload,
   type MobileBook,
   type MobileChapter,
   type MobileWord,
+  type MobileWrongWordFilters,
   type PracticeMode,
+  type QuickMemoryReviewQueuePathOptions,
+  type SmartStatsSyncEntry,
+  type SmartWordStatsStore,
   type WrongWord,
 } from '@ielts-vocab/app-core'
+import { loadLearningStatsCached, peekLearningStats } from './learningStatsCache'
 import { mobileApiClient } from './mobileApi'
+
+export { peekLearningStats }
 
 export type ExamResponseDraft = {
   questionId: number
@@ -82,11 +93,37 @@ export async function loadHomeTodos(): Promise<HomeTodoPayload> {
 }
 
 export async function loadLearningStats(): Promise<LearningStatsPayload> {
-  return LearningStatsPayloadSchema.parse(await mobileApiClient.json('/api/ai/learning-stats?days=7'))
+  return loadLearningStatsCached(async () =>
+    LearningStatsPayloadSchema.parse(await mobileApiClient.json('/api/ai/learning-stats?days=7')),
+  )
 }
 
 export async function loadLearnerProfile(): Promise<Record<string, unknown>> {
   return mobileApiClient.json('/api/ai/learner-profile?view=stats')
+}
+
+export async function loadSmartStats(): Promise<SmartWordStatsStore> {
+  const payload = await mobileApiClient.json<{ stats?: unknown[] }>('/api/ai/smart-stats')
+  return normalizeSmartStatsPayload(payload.stats)
+}
+
+export async function syncSmartStats(params: {
+  bookId?: string | null
+  chapterId?: string | number | null
+  mode?: string | null
+  stats: SmartStatsSyncEntry[]
+}) {
+  return mobileApiClient.json('/api/ai/smart-stats/sync', {
+    method: 'POST',
+    body: JSON.stringify({
+      context: {
+        bookId: params.bookId ?? undefined,
+        chapterId: params.chapterId == null ? undefined : String(params.chapterId),
+        mode: params.mode ?? undefined,
+      },
+      stats: params.stats,
+    }),
+  })
 }
 
 export async function loadBooks(search = ''): Promise<MobileBook[]> {
@@ -102,6 +139,11 @@ export async function loadMyBookIds(): Promise<string[]> {
 export async function loadBookProgressMap(): Promise<Record<string, ProgressSnapshot>> {
   const payload = await mobileApiClient.json<{ progress?: unknown }>('/api/books/progress')
   return normalizeProgressMap(payload.progress, 'book_id')
+}
+
+export async function loadBookProgress(bookId: string): Promise<ProgressSnapshot | null> {
+  const payload = await mobileApiClient.json<{ progress?: unknown }>(`/api/books/progress/${bookId}`)
+  return normalizeProgressMap(payload.progress ? { [bookId]: payload.progress } : null, 'book_id')[bookId] ?? null
 }
 
 export async function addMyBook(bookId: string) {
@@ -123,12 +165,26 @@ export async function loadChapterProgressMap(bookId: string): Promise<Record<str
   return normalizeProgressMap(payload.chapter_progress ?? payload.progress, 'chapter_id')
 }
 
+export async function loadChapterProgress(
+  bookId: string,
+  chapterId: string | number,
+): Promise<ProgressSnapshot | null> {
+  return (await loadChapterProgressMap(bookId))[String(chapterId)] ?? null
+}
+
 export async function loadChapterWords(bookId: string, chapterId?: string | number | null): Promise<MobileWord[]> {
   const path = chapterId == null
     ? `/api/books/word-list${query({ scope: 'book', book_id: bookId })}`
     : `/api/books/${bookId}/chapters/${chapterId}`
   const payload = await mobileApiClient.json<{ words?: unknown[]; chapter?: { words?: unknown[] } }>(path)
   return parseArray(MobileWordSchema, payload.words ?? payload.chapter?.words)
+}
+
+export async function loadQuickMemoryReviewQueue(
+  options: QuickMemoryReviewQueuePathOptions,
+): Promise<MobileWord[]> {
+  const payload = await mobileApiClient.json<{ words?: unknown[] }>(buildQuickMemoryReviewQueuePath(options))
+  return parseArray(MobileWordSchema, payload.words)
 }
 
 export async function searchWords(term: string): Promise<MobileWord[]> {
@@ -178,9 +234,17 @@ export async function createCustomBook(title: string, words: MobileWord[] | Wron
   })
 }
 
-export async function loadWrongWords(search = ''): Promise<WrongWord[]> {
+export async function loadWrongWords(search = '', filters: MobileWrongWordFilters = {}): Promise<WrongWord[]> {
   const payload = await mobileApiClient.json<{ words?: unknown[] }>(
-    `/api/ai/wrong-words${query({ details: 'compact', search })}`,
+    `/api/ai/wrong-words${query({
+      details: 'compact',
+      dim: filters.dimension === 'all' ? undefined : filters.dimension,
+      maxWrong: filters.maxWrongCount,
+      minWrong: filters.minWrongCount,
+      mode: filters.mode === 'all' ? undefined : filters.mode,
+      scope: filters.scope,
+      search,
+    })}`,
   )
   return parseArray(WrongWordSchema, payload.words)
 }
@@ -225,6 +289,12 @@ export async function savePracticeProgress(params: {
     is_completed: params.isCompleted,
     answered_words: params.answeredWords,
     queue_words: params.queueWords,
+  }
+  if (params.chapterId == null) {
+    return mobileApiClient.json('/api/books/progress', {
+      method: 'POST',
+      body: JSON.stringify({ book_id: params.bookId, ...body }),
+    })
   }
   await mobileApiClient.json(`/api/books/${params.bookId}/chapters/${params.chapterId}/progress`, {
     method: 'POST',
@@ -291,6 +361,19 @@ export async function submitExamAttempt(attemptId: number) {
 export async function loadJournalSummaries(): Promise<JournalSummary[]> {
   const payload = await mobileApiClient.json<{ summaries?: unknown[]; items?: unknown[] }>('/api/notes/summaries')
   return parseArray(JournalSummarySchema, payload.summaries ?? payload.items)
+}
+
+export async function loadTodayJournalEntry(): Promise<JournalEntry | null> {
+  const payload = await mobileApiClient.json<{ entry?: unknown }>('/api/notes/journal/today')
+  return payload.entry ? JournalEntrySchema.parse(payload.entry) : null
+}
+
+export async function saveTodayJournalEntry(content: string): Promise<JournalEntry> {
+  const payload = await mobileApiClient.json<{ entry?: unknown }>('/api/notes/journal', {
+    method: 'POST',
+    body: JSON.stringify({ content }),
+  })
+  return JournalEntrySchema.parse(payload.entry)
 }
 
 export async function loadLearningNotes(): Promise<LearningNote[]> {

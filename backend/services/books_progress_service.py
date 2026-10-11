@@ -311,14 +311,20 @@ def save_book_progress_response(user_id, data):
     return {'progress': effective_progress}, 200
 
 
-def build_chapter_progress_response(user_id, book_id):
+def build_chapter_progress_response(user_id, book_id, mode=None):
+    selected_mode = normalize_learning_mode(mode)
     progress_records = list_user_chapter_progress_rows(user_id, book_id=book_id)
     mode_records = list_user_chapter_mode_progress_rows(user_id, book_id=book_id)
-    rollup_progress_records = list_chapter_rollup_compat_rows(user_id, book_id=book_id)
+    rollup_progress_records = list_chapter_rollup_compat_rows(
+        user_id,
+        book_id=book_id,
+        mode=selected_mode,
+    )
     rollup_mode_records = list_chapter_mode_rollup_compat_rows(user_id, book_id=book_id)
 
     progress_dict = {}
-    for record in _merge_chapter_progress_records(progress_records, rollup_progress_records):
+    base_progress_records = [] if selected_mode else progress_records
+    for record in _merge_chapter_progress_records(base_progress_records, rollup_progress_records):
         payload = record.to_dict()
         payload['modes'] = {}
         progress_dict[str(record.chapter_id)] = payload

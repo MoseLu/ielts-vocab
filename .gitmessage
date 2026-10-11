@@ -1,0 +1,83 @@
+# <type>(<scope>): <description>
+#
+# [blank line]
+# [optional body]
+# [optional footer(s)]
+#
+# =============================================================================
+# CONVENTIONAL COMMITS 规范
+# =============================================================================
+#
+# 格式: <type>(<scope>): <description>
+#
+# =============================================================================
+# 允许的类型 (Types)
+# =============================================================================
+#
+# feat     - 新功能
+# fix      - 缺陷修复
+# docs     - 文档变更
+# refactor - 代码重构（不改变功能）
+# chore    - 构建/工具/辅助任务
+# test     - 测试相关
+# ci       - CI/CD 配置
+# perf     - 性能优化
+# build    - 构建系统或依赖变更
+# style    - 代码格式（不影响功能）
+#
+# =============================================================================
+# Scope 使用指南
+# =============================================================================
+#
+# Scope 使用受影响模块名（小写），可选：
+# - api, ui, auth, db, config, docs, cli, lib, utils
+# - 或具体模块名：user, order, payment, notification
+# - 无 scope 时表示跨模块或全局变更
+#
+# =============================================================================
+# Description 撰写规范
+# =============================================================================
+#
+# - 动词开头（add, fix, update, remove, improve...）
+# - 使用现在时陈述句
+# - 不超过 72 字符
+# - 不使用句号结尾
+# - 小写字母开头
+#
+# =============================================================================
+# Breaking Changes
+# =============================================================================
+#
+# 方式 1 - Footer 标记:
+#   BREAKING CHANGE: <描述>
+#
+# 方式 2 - Type 后加 "!":
+#   feat!<scope>!: <描述>
+#
+# =============================================================================
+# 示例 (Examples)
+# =============================================================================
+#
+# feat(api): add user authentication endpoint
+# fix(ui): correct button alignment on mobile
+# docs(readme): update installation instructions
+# refactor(auth): extract token validation logic
+# chore(deps): upgrade react to v18.2.0
+# test(user): add unit tests for login flow
+# ci: add GitHub Actions workflow for tests
+# perf(db): optimize query with proper indexes
+# build: configure webpack for production
+# style: format code with prettier
+#
+# 带 body 的示例:
+# feat(api): add rate limiting middleware
+#
+# Implement token bucket algorithm for API rate limiting.
+# Limits requests per IP to 100/minute with burst support.
+#
+# BREAKING CHANGE: Default rate limit headers changed
+#
+# 带 scope 省略的示例:
+# docs: update changelog for v2.0.0
+#
+# =============================================================================

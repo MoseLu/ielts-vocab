@@ -112,7 +112,10 @@ ensure_nginx_gateway_upstream
 if [[ -f /etc/nginx/conf.d/ielts-vocab.conf ]] && grep -q 'managed by Certbot' /etc/nginx/conf.d/ielts-vocab.conf; then
   echo "Preserving existing Certbot-managed nginx site config."
 else
-  cp "${app_root}/scripts/cloud-deploy/ielts-vocab.nginx.conf" /etc/nginx/conf.d/ielts-vocab.conf
+  [[ "${IELTS_PUBLIC_HOST}" =~ ^[A-Za-z0-9.-]+$ ]] || fail "Invalid IELTS_PUBLIC_HOST: ${IELTS_PUBLIC_HOST}"
+  sed "s/__IELTS_PUBLIC_HOST__/${IELTS_PUBLIC_HOST}/g" \
+    "${app_root}/scripts/cloud-deploy/ielts-vocab.nginx.conf" \
+    > /etc/nginx/conf.d/ielts-vocab.conf
 fi
 
 enable_runtime_watchdog_timer

@@ -70,7 +70,7 @@ class TestLoginRateLimiting:
 
     def test_rate_limit_blocks_after_10_failures(self, client, app):
         client.post('/api/auth/register', json={
-            'username': 'alice', 'password': 'correctpassword', 'email': 'alice@example.com',
+            'username': 'alice', 'password': 'correctpassword1', 'email': 'alice@example.com',
         })
 
         for index in range(10):
@@ -90,7 +90,7 @@ class TestLoginRateLimiting:
 
     def test_rate_limit_allows_after_window_resets(self, client, app):
         client.post('/api/auth/register', json={
-            'username': 'alice', 'password': 'correctpassword', 'email': 'alice@example.com',
+            'username': 'alice', 'password': 'correctpassword1', 'email': 'alice@example.com',
         })
 
         for _ in range(10):
@@ -113,13 +113,13 @@ class TestLoginRateLimiting:
 
         res = client.post('/api/auth/login', json={
             'email': 'alice@example.com',
-            'password': 'correctpassword',
+            'password': 'correctpassword1',
         })
         assert res.status_code == 200
 
     def test_rate_limit_falls_back_to_database_when_redis_is_unavailable(self, client, app):
         client.post('/api/auth/register', json={
-            'username': 'alice', 'password': 'correctpassword', 'email': 'alice@example.com',
+            'username': 'alice', 'password': 'correctpassword1', 'email': 'alice@example.com',
         })
 
         for _ in range(10):
@@ -172,7 +172,7 @@ class TestLoginRateLimiting:
         )
 
         client.post('/api/auth/register', json={
-            'username': 'alice', 'password': 'correctpassword', 'email': 'alice@example.com',
+            'username': 'alice', 'password': 'correctpassword1', 'email': 'alice@example.com',
         })
 
         for _ in range(10):
@@ -201,7 +201,7 @@ class TestLoginRateLimiting:
         app.config['LOGIN_MAX_ATTEMPTS'] = 2
 
         client.post('/api/auth/register', json={
-            'username': 'alice', 'password': 'correctpassword', 'email': 'alice@example.com',
+            'username': 'alice', 'password': 'correctpassword1', 'email': 'alice@example.com',
         })
 
         wrong_once = client.post('/api/auth/login', json={
@@ -213,7 +213,7 @@ class TestLoginRateLimiting:
 
         success = client.post('/api/auth/login', json={
             'email': 'alice@example.com',
-            'password': 'correctpassword',
+            'password': 'correctpassword1',
         })
         assert success.status_code == 200
         assert fake_redis._values == {}
@@ -304,7 +304,7 @@ class TestLoginRateLimiting:
 
     def test_rate_limit_uses_forwarded_client_ip_in_proxy_mode(self, client):
         client.post('/api/auth/register', json={
-            'username': 'alice', 'password': 'correctpassword', 'email': 'alice@example.com',
+            'username': 'alice', 'password': 'correctpassword1', 'email': 'alice@example.com',
         })
 
         def failed_login(forwarded_for: str):

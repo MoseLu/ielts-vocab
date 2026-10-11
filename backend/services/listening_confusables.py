@@ -18,6 +18,7 @@ _MEANING_POS_RE = re.compile(
     re.IGNORECASE,
 )
 _MEANING_NOISE_TOKENS = {'复数', '现在分词', '过去式', '过去分词', '第三人称单数', '比较级', '最高级', '口语', '英', '美'}
+_LISTENING_INFLECTION_DEFINITION_RE = re.compile(r'(?:复数|现在分词|过去式|过去分词|第三人称单数|\bpl\.)', re.IGNORECASE)
 
 
 def get_listening_confusables_path() -> str:
@@ -78,6 +79,13 @@ def _common_prefix_length(left: str, right: str) -> int:
     return prefix
 
 
+def _common_suffix_length(left: str, right: str) -> int:
+    suffix = 0
+    while suffix < len(left) and suffix < len(right) and left[-1 - suffix] == right[-1 - suffix]:
+        suffix += 1
+    return suffix
+
+
 def _normalize_meaning_parts(value: str | None) -> list[str]:
     cleaned = _MEANING_POS_RE.sub(' ', str(value or ''))
     cleaned = re.sub(r'[“”"()（）[\]【】]', ' ', cleaned)
@@ -118,6 +126,70 @@ def _phonetic_similarity(left: str | None, right: str | None) -> float:
     if not left_value or not right_value:
         return 0.0
     return 1 - _levenshtein(left_value, right_value) / max(len(left_value), len(right_value))
+
+
+def _listening_inflection_base_keys(word: str | None) -> list[str]:
+    key = normalize_listening_confusable_key(word)
+    if not key or ' ' in key:
+        return []
+
+    keys: set[str] = set()
+
+    def add(value: str) -> None:
+        normalized = normalize_listening_confusable_key(value)
+        if normalized and normalized != key:
+            keys.add(normalized)
+
+    if key.endswith('ies') and len(key) > 4:
+        add(f'{key[:-3]}y')
+    if key.endswith('ves') and len(key) > 4:
+        add(f'{key[:-3]}f')
+        add(f'{key[:-3]}fe')
+    if re.search(r'(?:ches|shes|xes|zes|ses|oes)$', key) and len(key) > 4:
+        add(key[:-2])
+    if key.endswith('s') and len(key) > 3 and not re.search(r'(?:ss|us|is)$', key):
+        add(key[:-1])
+    if key.endswith('ing') and len(key) > 5:
+        stem = key[:-3]
+        add(stem)
+        add(f'{stem}e')
+        if len(stem) > 2 and stem[-1] == stem[-2]:
+            add(stem[:-1])
+    if key.endswith('ied') and len(key) > 4:
+        add(f'{key[:-3]}y')
+    if key.endswith('ed') and len(key) > 4:
+        stem = key[:-2]
+        add(stem)
+        add(f'{stem}e')
+        if len(stem) > 2 and stem[-1] == stem[-2]:
+            add(stem[:-1])
+
+    return list(keys)
+
+
+def _is_inflected_listening_candidate(candidate: dict, known_keys: set[str]) -> bool:
+    if _LISTENING_INFLECTION_DEFINITION_RE.search(str(candidate.get('definition') or '')):
+        return True
+    return any(base_key in known_keys for base_key in _listening_inflection_base_keys(candidate.get('word')))
+
+
+def _is_strong_listening_candidate(word_entry: dict, candidate: dict) -> bool:
+    target_word = normalize_listening_confusable_key(word_entry.get('word'))
+    candidate_word = normalize_listening_confusable_key(candidate.get('word'))
+    if not target_word or not candidate_word:
+        return False
+
+    spelling_similarity = 1 - _levenshtein(target_word, candidate_word) / max(len(target_word), len(candidate_word), 1)
+    pronunciation_similarity = _phonetic_similarity(word_entry.get('phonetic'), candidate.get('phonetic'))
+    return (
+        pronunciation_similarity >= 0.62
+        or spelling_similarity >= 0.65
+        or (
+            spelling_similarity >= 0.55
+            and _common_prefix_length(target_word, candidate_word) >= 3
+            and _common_suffix_length(target_word, candidate_word) >= 1
+        )
+    )
 
 
 def _listening_candidate_priority(word_entry: dict, candidate: dict, index: int) -> tuple[float, int]:
@@ -345,14 +417,27 @@ def load_allowed_ielts_word_keys() -> set[str]:
     return _allowed_ielts_word_keys_cache
 
 
-def _filter_candidates_to_ielts_vocab(candidates: list[dict]) -> list[dict]:
+def _filter_candidates_to_ielts_vocab(candidates: list[dict], *, target_key: str = '') -> list[dict]:
     allowed = load_allowed_ielts_word_keys()
+    known_keys = set(allowed)
+    if target_key:
+        known_keys.add(target_key)
+    known_keys.update(
+        normalize_listening_confusable_key(candidate.get('word'))
+        for candidate in candidates
+        if normalize_listening_confusable_key(candidate.get('word'))
+    )
     if not allowed:
-        return candidates
+        return [
+            dict(candidate)
+            for candidate in candidates
+            if not _is_inflected_listening_candidate(candidate, known_keys)
+        ]
     return [
         dict(candidate)
         for candidate in candidates
         if normalize_listening_confusable_key(candidate.get('word')) in allowed
+        and not _is_inflected_listening_candidate(candidate, known_keys)
     ]
 
 
@@ -363,13 +448,14 @@ def get_preset_listening_confusables(word: str | None, limit: int | None = None)
 
     high_value_candidates = _filter_candidates_to_ielts_vocab(
         load_high_value_listening_confusable_index().get(key, []),
+        target_key=key,
     )
     if len(high_value_candidates) >= _HIGH_VALUE_ONLY_THRESHOLD:
         candidates = _merge_confusable_candidates(high_value_candidates)
     else:
         candidates = _merge_confusable_candidates(
             high_value_candidates,
-            _filter_candidates_to_ielts_vocab(load_listening_confusable_index().get(key, [])),
+            _filter_candidates_to_ielts_vocab(load_listening_confusable_index().get(key, []), target_key=key),
         )
     if limit is not None:
         candidates = candidates[:max(0, int(limit))]
@@ -381,10 +467,14 @@ def attach_preset_listening_confusables(word_entry: dict, limit: int | None = No
     if not word_text:
         return word_entry
 
-    candidates = rank_preset_listening_confusables(
+    ranked_candidates = rank_preset_listening_confusables(
         word_entry,
         get_preset_listening_confusables(word_text, limit=None),
     )
+    strong_candidates = [
+        candidate for candidate in ranked_candidates if _is_strong_listening_candidate(word_entry, candidate)
+    ]
+    candidates = strong_candidates if len(strong_candidates) >= 3 else ranked_candidates
     if limit is not None:
         candidates = candidates[:max(0, int(limit))]
     if not candidates:

@@ -15,6 +15,37 @@
     transform: translateY(calc(var(--size-1) * -1));
 }
 
+.qm-key-hints--test {
+    flex-wrap: wrap;
+    row-gap: var(--size-8);
+    max-width: 100%;
+}
+
+.qm-card--test .qm-btn {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--size-8);
+    padding-top: var(--size-12);
+}
+
+.qm-card--test .qm-btn-key {
+    align-self: flex-end;
+    font-size: var(--size-12);
+    color: currentColor;
+    opacity: 0.65;
+    font-weight: 500;
+    white-space: nowrap;
+    line-height: 1.2;
+    letter-spacing: 0.02em;
+}
+
+.qm-card--test .qm-btn-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--size-8);
+}
+
 .qm-btn:disabled,
 .qm-btn:disabled:hover {
     opacity: var(--alpha-52);
@@ -26,5 +57,17 @@
 @media (max-width: 480px) {
     .qm-card--test .qm-choice-row {
         gap: var(--size-8);
+    }
+}
+
+@media (max-height: 640px) {
+    .qm-card--test .qm-key-hints--test {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .qm-card--test .qm-btn-key {
+        align-self: center;
+        font-size: var(--size-12);
     }
 }

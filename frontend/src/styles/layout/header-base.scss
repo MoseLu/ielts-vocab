@@ -99,6 +99,15 @@
     display: flex;
     align-items: center;
     gap: var(--space-xs);
+    --header-toolbar-control-size: var(--size-40);
+}
+
+.header-toolbar .header-btn,
+.header-toolbar .user-btn {
+    width: var(--header-toolbar-control-size);
+    height: var(--header-toolbar-control-size);
+    min-width: var(--header-toolbar-control-size);
+    min-height: var(--header-toolbar-control-size);
 }
 
 /* ── Logo (legacy compat) ── */
@@ -194,19 +203,45 @@
 
 /* ── User button ── */
 .user-btn {
-    width: var(--size-40); height: var(--size-40);
-    display: flex; align-items: center; justify-content: center;
-    background: var(--surface-floating);
-    color: var(--text-inverse);
-    border: var(--size-1) solid var(--border-subtle);
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    color: inherit;
+    border: none;
     border-radius: var(--radius-full);
-    font-size: var(--size-14); font-weight: 600;
+    font-size: var(--size-14);
+    font-weight: 600;
     cursor: pointer;
     transition: var(--motion-transition-interactive-fast);
-    overflow: hidden;
+    flex-shrink: 0;
 }
-.user-btn:hover { transform: translateY(calc(var(--size-1) * -1)) scale(1.03); box-shadow: var(--shadow-md); }
-.user-avatar-img { width: 100%; height: 100%; object-fit: cover; }
+.user-btn:hover { transform: translateY(calc(var(--size-1) * -1)); }
+.user-btn:focus-visible {
+    outline: var(--size-2) solid var(--accent);
+    outline-offset: var(--size-2);
+}
+.user-avatar-frame {
+    width: 100%;
+    height: 100%;
+    display: block;
+    box-sizing: border-box;
+    border-radius: var(--radius-full);
+    overflow: hidden;
+    border: var(--size-1) solid var(--accent);
+    line-height: 0;
+}
+.user-btn .user-avatar-img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    border: none;
+    border-radius: var(--radius-full);
+    object-fit: cover;
+    object-position: center;
+    clip-path: circle(50% at 50% 50%);
+}
 .progress-indicator { font-size: var(--size-14); color: var(--text-secondary); font-weight: 500; }
 
 /* ── Mobile Header ── */

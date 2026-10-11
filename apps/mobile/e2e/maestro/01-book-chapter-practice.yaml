@@ -1,0 +1,46 @@
+appId: com.axiomaticworld.ieltsvocab
+---
+- runFlow: _login.yaml
+- tapOn:
+    id: tab.books
+- extendedWaitUntil:
+    visible:
+      id: screen.books
+    timeout: 10000
+- assertVisible: 全部词书
+- tapOn:
+    id: tab.practice
+- extendedWaitUntil:
+    visible:
+      id: screen.practice
+    timeout: 10000
+- tapOn:
+    id: practice.entry.ebbinghaus
+- extendedWaitUntil:
+    visible:
+      id: practice.quickmemory.known
+    timeout: 30000
+- assertVisible:
+    id: practice.controlSurface
+- assertVisible:
+    id: practice.control.wordList
+- assertVisible:
+    id: practice.control.favorite
+- assertVisible:
+    id: practice.control.pronunciation
+- assertVisible:
+    id: practice.control.settings
+- tapOn:
+    id: practice.control.wordList
+- extendedWaitUntil:
+    visible: 单词列表
+    timeout: 10000
+- pressKey: Back
+- tapOn:
+    id: practice.control.settings
+- extendedWaitUntil:
+    visible: 练习设置
+    timeout: 10000
+- pressKey: Back
+- tapOn:
+    id: practice.quickmemory.unknown

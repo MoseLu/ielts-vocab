@@ -4,14 +4,19 @@ import { MemoryRouter } from 'react-router-dom'
 import { vi } from 'vitest'
 import PracticePage from './PracticePage'
 
-vi.mock('../../hooks/useSpeechRecognition', () => ({
-  useSpeechRecognition: () => ({
+vi.mock('../../hooks', async () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const actual = await vi.importActual<any>('../../hooks')
+  return {
+    ...actual,
+    useSpeechRecognition: () => ({
     isConnected: true,
     isRecording: false,
     startRecording: vi.fn(),
     stopRecording: vi.fn(),
   }),
-}))
+  }
+})
 
 describe('PracticePage layout', () => {
   afterEach(() => {

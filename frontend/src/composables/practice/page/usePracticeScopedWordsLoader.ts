@@ -41,6 +41,7 @@ export function usePracticeScopedWordsLoader({
   chapterWrongBaselineRef,
   uniqueAnsweredRef,
   errorProgressHydratedRef,
+  listeningOptionPoolRef,
   beginSession,
   onListeningModeFallback,
 }: UsePracticePageDataParams) {
@@ -98,6 +99,7 @@ export function usePracticeScopedWordsLoader({
       chapterWrongBaselineRef,
       uniqueAnsweredRef,
       setVocabulary,
+      listeningOptionPoolRef,
       setQueue,
       setQueueIndex,
       setCorrectCount,
@@ -191,6 +193,7 @@ export function usePracticeScopedWordsLoader({
     setVocabulary,
     setWordStatuses,
     setWrongCount,
+    settings,
     settings.reviewInterval,
     settings.reviewLimit,
     settings.reviewLimitCustomized,
@@ -198,6 +201,7 @@ export function usePracticeScopedWordsLoader({
     uniqueAnsweredRef,
     vocabRef,
     wordsLearnedBaselineRef,
+    listeningOptionPoolRef,
   ])
 }
 
@@ -342,6 +346,7 @@ function resolveLoadedWords(
   isCustomPracticeScope: boolean,
   shared: SharedScopedLoadOptions,
 ) {
+  shared.listeningOptionPoolRef.current = mode === 'listening' ? rawWords : []
   return resolvePracticeWordsForMode({
     rawWords,
     mode,
@@ -465,6 +470,7 @@ type SharedScopedLoadOptions = Pick<
   | 'setResumeProgress'
   | 'setNoListeningPresets'
   | 'setPracticeGroup'
+  | 'listeningOptionPoolRef'
   | 'beginSession'
   | 'onListeningModeFallback'
   | 'showToast'

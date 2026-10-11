@@ -1,4 +1,4 @@
-import * as AIChat from '../../../hooks/useAIChat'
+import * as AIChat from '../../../hooks'
 
 export { AIChat }
 

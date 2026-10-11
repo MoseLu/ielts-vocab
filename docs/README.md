@@ -15,7 +15,7 @@ docs/
   - audits/                        # Architecture and risk audits
   - specs/                         # Technical design specs
 - governance/                      # Product and UI governance logs
-- milestones/                      # Cross-release milestones and completion snapshots
+- milestone/                      # Cross-release milestone and completion snapshots
 - operations/                      # Tooling, automation, and operator runbooks
 - planning/
   - implementation/                # Concrete implementation plans
@@ -32,7 +32,7 @@ docs/
 - Put tooling setup and operational runbooks in `operations/`.
 - Put product requirement baselines, phased feature plans, and rollout checklists in `planning/`.
 - Put governance history and cross-cutting UI cleanup logs in `governance/`.
-- Put cross-feature delivery checkpoints and release snapshots in `milestones/`.
+- Put cross-feature delivery checkpoints and release snapshots in `milestone/`.
 - Put detailed child task breakdowns in `todo/` when a root TODO item needs its own checklist.
 - Put append-only execution records in `logs/submit/`.
 
@@ -56,11 +56,11 @@ docs/
 
 - [ui-governance-log.md](./governance/ui-governance-log.md)
 
-### Milestones
+### Milestone
 
-- [README.md](./milestones/README.md)
-- [2026-q1-platform-foundation.md](./milestones/2026-q1-platform-foundation.md)
-- [milestone-template.md](./milestones/templates/milestone-template.md)
+- [README.md](./milestone/README.md)
+- [2026-q1-platform-foundation.md](./milestone/2026-q1-platform-foundation.md)
+- [milestone-template.md](./milestone/templates/milestone-template.md)
 
 ### Operations
 

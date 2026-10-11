@@ -12,6 +12,7 @@ def test_mac_split_runtime_smoke_script_uses_shell_runtime_chain():
     script = _read('scripts/ci/mac-split-runtime-smoke.sh')
 
     assert 'start-microservices.sh' in script
+    assert 'bash "${start_script}"' in script
     assert '--skip-frontend-checks' in script
     assert 'pnpm --dir frontend exec playwright test tests/e2e/smoke.spec.ts --project=chromium' in script
     assert 'backend/.env.microservices.local.example' in script

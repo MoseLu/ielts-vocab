@@ -63,9 +63,12 @@ def _load_ai_speaking_route_support():
 
 @lru_cache(maxsize=1)
 def _load_ai_follow_read_route_support():
-    from platform_sdk.ai_follow_read_assessment_application import evaluate_follow_read_response
+    from platform_sdk.ai_follow_read_assessment_application import (
+        evaluate_follow_read_response,
+        explain_follow_read_response,
+    )
 
-    return evaluate_follow_read_response
+    return evaluate_follow_read_response, explain_follow_read_response
 
 
 @ai_bp.route('/greet', methods=['POST'])
@@ -193,7 +196,15 @@ def speaking_evaluate(current_user):
 @ai_bp.route('/follow-read/evaluate', methods=['POST'])
 @token_required
 def follow_read_evaluate(current_user):
-    return _load_ai_follow_read_route_support()(current_user, request.form, request.files)
+    evaluate_follow_read_response, _ = _load_ai_follow_read_route_support()
+    return evaluate_follow_read_response(current_user, request.form, request.files)
+
+
+@ai_bp.route('/follow-read/explain', methods=['POST'])
+@token_required
+def follow_read_explain(current_user):
+    _, explain_follow_read_response = _load_ai_follow_read_route_support()
+    return explain_follow_read_response(current_user, request.get_json(silent=True) or {})
 
 
 @ai_bp.route('/speaking/history', methods=['GET'])

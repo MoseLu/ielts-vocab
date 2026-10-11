@@ -18,7 +18,7 @@ interface SpeakingRecorderState {
 
 interface SpeakingRecorderActions {
   resetRecording: () => void
-  startRecording: () => Promise<void>
+  startRecording: () => Promise<boolean>
   stopRecording: () => Promise<Blob | null>
 }
 
@@ -143,9 +143,11 @@ export function useSpeakingRecorder(): SpeakingRecorderResult {
         },
       })
       setIsRecording(true)
+      return true
     } catch (nextError: unknown) {
       await releaseResources()
       setError(mapRecorderError(nextError))
+      return false
     }
   }, [releaseResources])
 

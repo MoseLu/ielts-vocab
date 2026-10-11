@@ -12,6 +12,10 @@ if sys.platform == 'win32':
 # Load .env
 load_dotenv()
 
+if __name__ != '__main__' and 'pytest' in sys.modules:
+    import pytest
+    pytest.skip("Manual DashScope ASR script; run directly with ASR_TEST_AUDIO_PATH.", allow_module_level=True)
+
 api_key = os.environ.get('DASHSCOPE_API_KEY', '')
 base_url = os.environ.get('DASHSCOPE_BASE_URL', 'https://dashscope.aliyuncs.com/compatible-mode/v1')
 
@@ -22,7 +26,10 @@ models_to_test = [
     'fun-asr-flash-8k-realtime'
 ]
 
-audio_file_path = r'C:\Users\12081\Documents\录音\录音 (4).m4a'
+audio_file_path = os.environ.get(
+    'ASR_TEST_AUDIO_PATH',
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), 'test_audio', 'recording.m4a'),
+)
 
 print(f"Testing DashScope ASR API with audio file: {audio_file_path}")
 print(f"API Key: {api_key[:20]}...")

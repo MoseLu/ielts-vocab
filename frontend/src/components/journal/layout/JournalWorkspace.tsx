@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import { Page, PageContent, PageHeader } from '../../layout'
 import { UnderlineTabs } from '../../ui'
 
-type JournalTab = 'summaries' | 'notes'
+type JournalTab = 'today' | 'history'
 
 interface JournalWorkspaceProps {
   activeTab: JournalTab
@@ -22,12 +22,12 @@ export default function JournalWorkspace({
       <PageHeader className="journal-topbar">
         <UnderlineTabs
           className="journal-tabs"
-          ariaLabel="学习日志导航"
+          ariaLabel="日记导航"
           value={activeTab}
           onChange={onTabChange}
           options={[
-            { value: 'summaries', label: '每日总结' },
-            { value: 'notes', label: '问答历史' },
+            { value: 'today', label: '今日复盘' },
+            { value: 'history', label: '历史笔记' },
           ]}
         />
 

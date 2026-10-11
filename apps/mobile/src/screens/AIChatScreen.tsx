@@ -43,6 +43,7 @@ export function AIChatScreen(_props: { goBack?: () => void; navigate: Navigate }
             contentContainerStyle={styles.threadContent}
             keyboardDismissMode="on-drag"
             keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
             style={styles.thread}
           >
             <View style={[styles.bubble, styles.assistantBubble]}>
@@ -84,6 +85,7 @@ export function AIChatScreen(_props: { goBack?: () => void; navigate: Navigate }
               placeholderTextColor={theme.colors.textTertiary}
               scrollEnabled={false}
               style={styles.input}
+              testID="ai.prompt"
               textAlignVertical="top"
               value={message}
             />
@@ -92,6 +94,7 @@ export function AIChatScreen(_props: { goBack?: () => void; navigate: Navigate }
               disabled={loading}
               onPress={() => void submit()}
               style={[styles.sendButton, loading ? styles.sendButtonDisabled : null]}
+              testID="ai.send"
             >
               <Text style={styles.sendText}>{loading ? '整理中...' : '发送'}</Text>
             </Pressable>

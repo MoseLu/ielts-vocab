@@ -25,6 +25,7 @@ type WordAudioUrlEntry = {
 
 const MAX_WORD_AUDIO_CACHE_ENTRIES = 12
 const WORD_AUDIO_CACHE_PROBE_TIMEOUT_MS = 1_500
+const WORD_AUDIO_GENERATE_TIMEOUT_MS = 12_000
 
 const wordBinaryCache = new Map<string, AudioBinaryEntry>()
 const wordBinaryRequestCache = new Map<string, Promise<AudioBinaryEntry | null>>()
@@ -47,11 +48,15 @@ function buildWordAudioUrl(word: string, cacheKey: string | null): string {
   return buildApiUrl(`/api/tts/word-audio?${params.toString()}`)
 }
 
+function buildGeneratedWordAudioUrl(word: string): string {
+  return buildApiUrl(`/api/tts/word-audio?${new URLSearchParams({ w: word.trim() }).toString()}`)
+}
+
 async function fetchWordAudioCacheProbe(url: string, method: 'GET' | 'HEAD'): Promise<Response> {
   return apiRequest(url, {
     method,
     cache: 'no-store',
-    headers: { 'Cache-Control': 'no-cache' },
+    headers: { 'Cache-Control': 'no-cache', 'X-Audio-Cache-Probe': '1' },
     timeoutMs: WORD_AUDIO_CACHE_PROBE_TIMEOUT_MS,
   })
 }
@@ -129,6 +134,15 @@ async function requestWordAudioEntry(word: string, cacheKey: string | null): Pro
   return fetchValidatedAudioEntry(() => fetchWordAudioCacheProbe(buildWordAudioUrl(word, cacheKey), 'GET'))
 }
 
+async function requestGeneratedWordAudioEntry(word: string): Promise<AudioBinaryEntry | null> {
+  return fetchValidatedAudioEntry(() => apiRequest(buildGeneratedWordAudioUrl(word), {
+    method: 'GET',
+    cache: 'no-store',
+    headers: { 'Cache-Control': 'no-cache' },
+    timeoutMs: WORD_AUDIO_GENERATE_TIMEOUT_MS,
+  }))
+}
+
 async function ensureWordAudioEntry(word: string): Promise<AudioBinaryEntry | null> {
   const key = normalizeWordKey(word)
   if (!key) return null
@@ -138,6 +152,25 @@ async function ensureWordAudioEntry(word: string): Promise<AudioBinaryEntry | nu
   const existingRequest = wordBinaryRequestCache.get(requestKey)
   if (existingRequest) return existingRequest
   const nextRequest = requestWordAudioEntry(word, null)
+    .then(entry => (entry ? rememberBinaryEntry(wordBinaryCache, key, entry, MAX_WORD_AUDIO_CACHE_ENTRIES) : null))
+    .finally(() => {
+      if (wordBinaryRequestCache.get(requestKey) === nextRequest) {
+        wordBinaryRequestCache.delete(requestKey)
+      }
+    })
+  wordBinaryRequestCache.set(requestKey, nextRequest)
+  return nextRequest
+}
+
+async function ensureGeneratedWordAudioEntry(word: string): Promise<AudioBinaryEntry | null> {
+  const key = normalizeWordKey(word)
+  if (!key) return null
+  const cached = await ensureWordAudioEntry(word)
+  if (cached) return cached
+  const requestKey = `${key}|generated`
+  const existingRequest = wordBinaryRequestCache.get(requestKey)
+  if (existingRequest) return existingRequest
+  const nextRequest = requestGeneratedWordAudioEntry(word)
     .then(entry => (entry ? rememberBinaryEntry(wordBinaryCache, key, entry, MAX_WORD_AUDIO_CACHE_ENTRIES) : null))
     .finally(() => {
       if (wordBinaryRequestCache.get(requestKey) === nextRequest) {
@@ -270,17 +303,22 @@ export async function resolveWordAudioAsset(request: WordAudioRequest): Promise<
       }
     }
   }
-  const entry = await ensureWordAudioEntry(request.word)
+  const entry = sourcePreference === 'generated'
+    ? await ensureGeneratedWordAudioEntry(request.word)
+    : await ensureWordAudioEntry(request.word)
   if (!entry) return null
+  const fallbackUrl = entry.cacheKey
+    ? buildWordAudioUrl(request.word, entry.cacheKey)
+    : buildGeneratedWordAudioUrl(request.word)
   return {
-    assetId: `word:${wordKey}:buffer`,
+    assetId: `word:${wordKey}:${sourcePreference === 'generated' ? 'generated' : 'buffer'}`,
     kind: 'word',
     wordKey,
     cacheKey: entry.cacheKey,
     clips: [createAssetClip({
       clipId: `word:${wordKey}`,
       buffer: entry.buffer,
-      fallbackUrl: buildWordAudioUrl(request.word, entry.cacheKey),
+      fallbackUrl,
       cacheKey: entry.cacheKey,
       durationMs: null,
       playbackRate: 1,

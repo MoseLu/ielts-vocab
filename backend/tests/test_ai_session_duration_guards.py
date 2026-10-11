@@ -49,7 +49,7 @@ def test_log_session_caps_to_recent_server_activity_when_client_cap_missing(clie
     base_now_utc = datetime.now(timezone.utc).replace(microsecond=0)
     recovered_start_utc = base_now_utc - timedelta(hours=6, minutes=54, seconds=2)
     last_activity_utc = recovered_start_utc + timedelta(seconds=56)
-    expected_duration_seconds = 5 * 60 + 56
+    expected_duration_seconds = 2 * 60 + 56
 
     start_res = client.post('/api/ai/start-session', json={
         'mode': 'listening',
@@ -93,7 +93,62 @@ def test_log_session_caps_to_recent_server_activity_when_client_cap_missing(clie
         session = UserStudySession.query.get(session_id)
         assert session is not None
         assert session.duration_seconds == expected_duration_seconds
-        assert session.ended_at == (last_activity_utc + timedelta(minutes=5)).replace(tzinfo=None)
+        assert session.ended_at == (last_activity_utc + timedelta(minutes=2)).replace(tzinfo=None)
+
+
+def test_log_session_sums_activity_windows_instead_of_idle_gap(client, app):
+    register_and_login(client, username='session-user-idle-gap')
+
+    base_now_utc = datetime.now(timezone.utc).replace(microsecond=0)
+    session_start_utc = base_now_utc - timedelta(minutes=50)
+    early_activity_utc = session_start_utc + timedelta(seconds=10)
+    late_activity_utc = session_start_utc + timedelta(minutes=40)
+    expected_duration_seconds = 130 + 120
+
+    start_res = client.post('/api/ai/start-session', json={
+        'mode': 'listening',
+        'bookId': 'ielts_listening_premium',
+        'chapterId': '54',
+    })
+    assert start_res.status_code == 201
+    session_id = start_res.get_json()['sessionId']
+
+    with app.app_context():
+        session = UserStudySession.query.get(session_id)
+        assert session is not None
+        session.started_at = session_start_utc.replace(tzinfo=None)
+        db.session.commit()
+        for occurred_at in (early_activity_utc, late_activity_utc):
+            add_learning_event(
+                user_id=session.user_id,
+                event_type='chapter_mode_progress_updated',
+                source='chapter_mode_progress',
+                mode='listening',
+                book_id='ielts_listening_premium',
+                chapter_id='54',
+                occurred_at=occurred_at.replace(tzinfo=None),
+            )
+
+    log_res = client.post('/api/ai/log-session', json={
+        'sessionId': session_id,
+        'mode': 'listening',
+        'bookId': 'ielts_listening_premium',
+        'chapterId': '54',
+        'wordsStudied': 50,
+        'correctCount': 27,
+        'wrongCount': 23,
+        'durationSeconds': int((base_now_utc - session_start_utc).total_seconds()),
+        'startedAt': int(session_start_utc.timestamp() * 1000),
+        'endedAt': int(base_now_utc.timestamp() * 1000),
+    })
+
+    assert log_res.status_code == 200
+
+    with app.app_context():
+        session = UserStudySession.query.get(session_id)
+        assert session is not None
+        assert session.duration_seconds == expected_duration_seconds
+        assert session.ended_at == (late_activity_utc + timedelta(minutes=2)).replace(tzinfo=None)
 
 
 def test_learning_core_log_session_caps_to_recent_server_activity(client, app):
@@ -102,7 +157,7 @@ def test_learning_core_log_session_caps_to_recent_server_activity(client, app):
     base_now_utc = datetime.now(timezone.utc).replace(microsecond=0)
     recovered_start_utc = base_now_utc - timedelta(hours=6, minutes=54, seconds=2)
     last_activity_utc = recovered_start_utc + timedelta(seconds=56)
-    expected_duration_seconds = 5 * 60 + 56
+    expected_duration_seconds = 2 * 60 + 56
 
     start_res = client.post('/api/ai/start-session', json={
         'mode': 'listening',
@@ -147,7 +202,63 @@ def test_learning_core_log_session_caps_to_recent_server_activity(client, app):
         session = UserStudySession.query.get(session_id)
         assert session is not None
         assert session.duration_seconds == expected_duration_seconds
-        assert session.ended_at == (last_activity_utc + timedelta(minutes=5)).replace(tzinfo=None)
+        assert session.ended_at == (last_activity_utc + timedelta(minutes=2)).replace(tzinfo=None)
+
+
+def test_learning_core_log_session_sums_activity_windows_instead_of_idle_gap(client, app):
+    register_and_login(client, username='split-session-user-idle-gap')
+
+    base_now_utc = datetime.now(timezone.utc).replace(microsecond=0)
+    session_start_utc = base_now_utc - timedelta(minutes=50)
+    early_activity_utc = session_start_utc + timedelta(seconds=10)
+    late_activity_utc = session_start_utc + timedelta(minutes=40)
+    expected_duration_seconds = 130 + 120
+
+    start_res = client.post('/api/ai/start-session', json={
+        'mode': 'listening',
+        'bookId': 'ielts_listening_premium',
+        'chapterId': '18',
+    })
+    assert start_res.status_code == 201
+    session_id = start_res.get_json()['sessionId']
+
+    with app.app_context():
+        session = UserStudySession.query.get(session_id)
+        assert session is not None
+        session.started_at = session_start_utc.replace(tzinfo=None)
+        db.session.commit()
+        for occurred_at in (early_activity_utc, late_activity_utc):
+            add_learning_event(
+                user_id=session.user_id,
+                event_type='chapter_mode_progress_updated',
+                source='chapter_mode_progress',
+                mode='listening',
+                book_id='ielts_listening_premium',
+                chapter_id='18',
+                occurred_at=occurred_at.replace(tzinfo=None),
+            )
+
+        payload, status = log_learning_core_session_response(session.user_id, {
+            'sessionId': session_id,
+            'mode': 'listening',
+            'bookId': 'ielts_listening_premium',
+            'chapterId': '18',
+            'wordsStudied': 50,
+            'correctCount': 27,
+            'wrongCount': 23,
+            'durationSeconds': int((base_now_utc - session_start_utc).total_seconds()),
+            'startedAt': int(session_start_utc.timestamp() * 1000),
+            'endedAt': int(base_now_utc.timestamp() * 1000),
+        })
+
+        assert status == 200
+        assert payload['id'] == session_id
+
+        db.session.expire_all()
+        session = UserStudySession.query.get(session_id)
+        assert session is not None
+        assert session.duration_seconds == expected_duration_seconds
+        assert session.ended_at == (late_activity_utc + timedelta(minutes=2)).replace(tzinfo=None)
 
 
 def test_learning_stats_caps_live_pending_duration_by_recent_activity(client, app):
@@ -156,7 +267,7 @@ def test_learning_stats_caps_live_pending_duration_by_recent_activity(client, ap
     base_now_utc = datetime.now(timezone.utc).replace(microsecond=0)
     recovered_start_utc = base_now_utc - timedelta(hours=2)
     last_activity_utc = recovered_start_utc + timedelta(seconds=42)
-    expected_duration_seconds = 5 * 60 + 42
+    expected_duration_seconds = 2 * 60 + 42
 
     start_res = client.post('/api/ai/start-session', json={
         'mode': 'listening',

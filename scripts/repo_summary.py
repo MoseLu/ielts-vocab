@@ -11,7 +11,7 @@ from pathlib import Path
 
 TIMESTAMP_RE = re.compile(r'^Last updated:\s*(?P<value>.+?)\s*$', re.MULTILINE)
 CANONICAL_DOCS = ('AGENTS.md', 'MILESTONE.md', 'TODO.md')
-SUPPORT_DIRS = ('docs', 'docs/todo', 'docs/agents', 'docs/milestones')
+SUPPORT_DIRS = ('docs', 'docs/todo', 'docs/agents', 'docs/milestone')
 
 
 @dataclass(frozen=True)

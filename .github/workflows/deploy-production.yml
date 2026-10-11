@@ -112,7 +112,7 @@ jobs:
     timeout-minutes: 45
     environment:
       name: production
-      url: https://axiomaticworld.com
+      url: ${{ vars.PROD_PUBLIC_URL || 'https://axiomaticworld.com' }}
     permissions:
       contents: read
     steps:
@@ -131,6 +131,7 @@ jobs:
         env:
           FRONTEND_ASSET_BASE_URL: ${{ vars.FRONTEND_ASSET_BASE_URL }}
           VITE_ASSET_BASE_URL: ${{ vars.VITE_ASSET_BASE_URL }}
+          PUBLIC_WEB_ORIGINS: ${{ vars.PUBLIC_WEB_ORIGINS }}
           FRONTEND_ASSET_OSS_ENABLED: ${{ vars.FRONTEND_ASSET_OSS_ENABLED }}
           FRONTEND_ASSET_OSS_PUBLIC_BASE_URL: ${{ vars.FRONTEND_ASSET_OSS_PUBLIC_BASE_URL }}
           FRONTEND_ASSET_OSS_PREFIX: ${{ vars.FRONTEND_ASSET_OSS_PREFIX }}
@@ -163,7 +164,7 @@ jobs:
           chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan -H "${PROD_SSH_HOST}" >> ~/.ssh/known_hosts
 
-      - name: Upload deployment scripts
+      - name: Upload deployment artifact and scripts
         shell: bash
         env:
           PROD_SSH_HOST: ${{ secrets.PROD_SSH_HOST }}
@@ -173,12 +174,15 @@ jobs:
           ssh "${PROD_SSH_USER}@${PROD_SSH_HOST}" "rm -rf '${remote_tmp}' && mkdir -p '${remote_tmp}'"
           artifact_upload_started="$(date +%s)"
           artifact_size="$(du -h "${ARTIFACT_PATH}" | awk '{print $1}')"
-          echo "Uploading release artifact (${artifact_size}) with rsync --partial --progress"
+          upload_attempt_timeout_seconds=900
+          rsync_io_timeout_seconds=300
+          echo "Uploading release artifact (${artifact_size}) with rsync --partial --append-verify --progress"
+          echo "Upload attempt timeout: ${upload_attempt_timeout_seconds}s; rsync I/O timeout: ${rsync_io_timeout_seconds}s"
           artifact_uploaded=false
           for attempt in 1 2 3; do
             echo "Release artifact upload attempt ${attempt}/3"
-            if timeout --signal=TERM --kill-after=15s 90s \
-              rsync --partial --progress --timeout=60 "${ARTIFACT_PATH}" \
+            if timeout --signal=TERM --kill-after=15s "${upload_attempt_timeout_seconds}s" \
+              rsync --partial --append-verify --progress --timeout="${rsync_io_timeout_seconds}" "${ARTIFACT_PATH}" \
               "${PROD_SSH_USER}@${PROD_SSH_HOST}:${remote_tmp}/ielts-vocab-release.tgz"; then
               artifact_uploaded=true
               break
@@ -229,8 +233,35 @@ jobs:
           PROD_SSH_USER: ${{ secrets.PROD_SSH_USER }}
           PROD_APP_HOME: ${{ vars.PROD_APP_HOME }}
           PROD_SMOKE_HOST: ${{ vars.PROD_SMOKE_HOST }}
+          IELTS_PUBLIC_HOST: ${{ vars.IELTS_PUBLIC_HOST }}
         run: |
           app_home="${PROD_APP_HOME:-/opt/ielts-vocab}"
-          smoke_host="${PROD_SMOKE_HOST:-axiomaticworld.com}"
-          remote_cmd="set -euo pipefail; run_privileged(){ if [[ \"\${EUID}\" -eq 0 ]]; then \"\$@\"; else sudo -n \"\$@\"; fi; }; cleanup(){ run_privileged rm -rf '${REMOTE_TMP}'; }; trap cleanup EXIT; run_privileged chmod +x '${REMOTE_TMP}'/*.sh; run_privileged env APP_HOME='${app_home}' SMOKE_HOST='${smoke_host}' bash '${REMOTE_TMP}/deploy-release-artifact.sh' '${REMOTE_TMP}/ielts-vocab-release.tgz' '${COMMIT_SHA}'"
+          public_host="${IELTS_PUBLIC_HOST:-axiomaticworld.com}"
+          smoke_host="${PROD_SMOKE_HOST:-${public_host}}"
+          remote_cmd="set -euo pipefail; run_privileged(){ if [[ \"\${EUID}\" -eq 0 ]]; then \"\$@\"; else sudo -n \"\$@\"; fi; }; cleanup(){ run_privileged rm -rf '${REMOTE_TMP}'; }; trap cleanup EXIT; run_privileged chmod +x '${REMOTE_TMP}'/*.sh; run_privileged env APP_HOME='${app_home}' IELTS_PUBLIC_HOST='${public_host}' SMOKE_HOST='${smoke_host}' bash '${REMOTE_TMP}/deploy-release-artifact.sh' '${REMOTE_TMP}/ielts-vocab-release.tgz' '${COMMIT_SHA}'"
           ssh "${PROD_SSH_USER}@${PROD_SSH_HOST}" "${remote_cmd}"
+
+      - name: Close deployed feature wish tickets
+        shell: bash
+        env:
+          FEATURE_WISH_CLOSEOUT_ENABLED: ${{ vars.FEATURE_WISH_CLOSEOUT_ENABLED }}
+          FEATURE_WISH_API_BASE: ${{ vars.FEATURE_WISH_API_BASE }}
+          FEATURE_WISH_API_TOKEN: ${{ secrets.FEATURE_WISH_API_TOKEN }}
+        run: |
+          if [[ "${FEATURE_WISH_CLOSEOUT_ENABLED:-}" != "true" ]]; then
+            echo "Feature wish closeout is disabled"
+            exit 0
+          fi
+          if [[ -z "${FEATURE_WISH_API_TOKEN:-}" ]]; then
+            echo "FEATURE_WISH_API_TOKEN is empty; skipping feature wish closeout"
+            exit 0
+          fi
+          ticket_ids="$(python3 scripts/ops/feature-wish-workflow.py extract --rev HEAD)"
+          if [[ -z "${ticket_ids}" ]]; then
+            echo "No feature_wish tickets found on deployed commit"
+            exit 0
+          fi
+          while IFS= read -r ticket_id; do
+            [[ -n "${ticket_id}" ]] || continue
+            python3 scripts/ops/feature-wish-workflow.py mark --id "${ticket_id}" --status done
+          done <<< "${ticket_ids}"

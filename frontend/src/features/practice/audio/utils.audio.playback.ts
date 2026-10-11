@@ -1,4 +1,4 @@
-import { getManagedAudioFailureReason, isAutoplayBlockedError, rememberManagedAudioFailureReason, resetManagedAudioFailureReason } from './utils.audio.failure'
+import { getManagedAudioFailureReason, isAutoplayBlockedError, rememberManagedAudioFailureReason, resetManagedAudioFailureReason, type ManagedAudioFailureReason } from './utils.audio.failure'
 import { ensureManagedAudioKeepAlive, fillManagedAudioLeadIn, getManagedAudioLeadInMs as readManagedAudioLeadInMs, getManagedAudioLeadingSilenceSeconds, getManagedAudioStartDelaySeconds, stopManagedAudioKeepAlive, type ManagedAudioKeepAliveState } from './utils.audio.webAudio'
 const SILENT_WAV_DATA_URI = 'data:audio/wav;base64,UklGRjQAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YRAAAAAAAAAAAAAAAAAAAAAAAAAA'
 type PlaybackOptions = {
@@ -393,7 +393,7 @@ async function playHtmlAudio(src: string, options: PlaybackOptions): Promise<boo
       resolve(started)
       if (options.notifyOnFailure !== false) options.onEnd?.()
     }
-    audio.onerror = fail
+    audio.onerror = () => fail()
     audio.onended = () => {
       if (!options.isCurrent()) return resolveIfCurrent(resolve)
       if (settled) return

@@ -78,3 +78,30 @@ export const ExportResponseSchema = z.object({
   filename: z.string(),
   format: z.string(),
 })
+
+export const JournalEntrySchema = z.object({
+  id: z.number().int(),
+  date: z.string(),
+  content: z.string(),
+  polished_content: z.string().nullable().optional(),
+  created_at: z.string(),
+  updated_at: z.string(),
+})
+export type JournalEntry = z.infer<typeof JournalEntrySchema>
+
+export const JournalEntryListResponseSchema = z.object({
+  entries: z.array(JournalEntrySchema),
+  has_more: z.boolean(),
+})
+
+export const JournalTodayResponseSchema = z.object({
+  entry: JournalEntrySchema.nullable(),
+})
+
+export const JournalUpsertResponseSchema = z.object({
+  entry: JournalEntrySchema,
+})
+
+export const JournalPolishResponseSchema = z.object({
+  polished: z.string(),
+})

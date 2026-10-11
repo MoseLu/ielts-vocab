@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useAuth } from '../../../contexts'
-import { apiFetch } from '../../../lib'
 import { reconcileQuickMemoryRecordsWithBackend } from '../../../lib/quickMemorySync'
+import { getLearnerProfile, getLearningStats } from '../services/learningStatsService'
 
 export interface DailyLearning {
   date: string           // 'YYYY-MM-DD'
@@ -224,7 +224,7 @@ export interface UseLearningStatsOptions {
   skipInitialQuickMemoryReconcile?: boolean
 }
 
-interface LearningStatsResponse {
+export interface LearningStatsResponse {
   daily?: DailyLearning[]
   books?: LearningBook[]
   modes?: string[]
@@ -294,17 +294,15 @@ export function useLearningStats(
     setUseFallback(data.use_fallback || false)
   }, [])
 
-  const fetchStatsPayload = useCallback(async () => {
-    const params = new URLSearchParams({ days: String(days) })
-    if (bookId && bookId !== 'all') params.set('book_id', bookId)
-    if (mode && mode !== 'all') params.set('mode', mode)
+  const fetchStatsPayload = useCallback(
+    () => getLearningStats({ days, bookId, mode }),
+    [bookId, days, mode],
+  )
 
-    return apiFetch<LearningStatsResponse>(`/api/ai/learning-stats?${params}`, { cache: 'no-store' })
-  }, [bookId, days, mode])
-
-  const fetchLearnerProfile = useCallback(async () => {
-    return apiFetch<LearnerProfile>('/api/ai/learner-profile?view=stats', { cache: 'no-store' }).catch(() => null)
-  }, [])
+  const fetchLearnerProfile = useCallback(
+    () => getLearnerProfile(),
+    [],
+  )
 
   useEffect(() => {
     if (lastUserIdRef.current === userId && lastAuthLoadingRef.current === authLoading) return

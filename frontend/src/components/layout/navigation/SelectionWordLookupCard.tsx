@@ -1,5 +1,5 @@
 import { createPortal } from 'react-dom'
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { DEFAULT_SETTINGS } from '../../../constants'
 import { useAuth, useToast } from '../../../contexts'
 import type { WordDetailResponse, WordSearchResult } from '../../../lib'
@@ -139,7 +139,7 @@ export default function SelectionWordLookupCard({
       style={{
         '--selection-lookup-left': `${panelPosition.left}px`,
         '--selection-lookup-top': `${panelPosition.top}px`,
-      }}
+      } as CSSProperties}
     >
       <div className="selection-word-lookup-header">
         <div className="selection-word-lookup-heading">

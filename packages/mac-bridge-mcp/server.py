@@ -28,8 +28,8 @@ from mcp.server import Server
 # 路径常量
 # --------------------------------------------------------------------------- #
 REPO_ROOT = Path(__file__).resolve().parents[2]
-MAC_APP_LOG_DIR = REPO_ROOT / "logs" / "runtime" / "mac-apps"
-MICROSERVICE_LOG_DIR = REPO_ROOT / "logs" / "runtime" / "microservices-mac"
+MAC_APP_LOG_DIR = REPO_ROOT / "logs" / "runtime" / "mac-app"
+MICROSERVICE_LOG_DIR = REPO_ROOT / "logs" / "runtime" / "app-services-mac"
 RUN_MAC_APP_SCRIPT = REPO_ROOT / "scripts" / "run-mac-local-app.sh"
 
 # --------------------------------------------------------------------------- #

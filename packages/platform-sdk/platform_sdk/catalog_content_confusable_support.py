@@ -7,7 +7,7 @@ from flask import current_app, request
 
 from platform_sdk.catalog_runtime_adapters import books_confusable_repository
 from platform_sdk.catalog_provider_adapter import load_book_vocabulary, resolve_current_user
-from services.learning_activity_service import delete_learning_activity_scope
+from platform_sdk.learning_activity_adapter import delete_learning_activity_scope
 
 if TYPE_CHECKING:
     from models import User

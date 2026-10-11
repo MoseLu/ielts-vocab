@@ -4,7 +4,7 @@ import os
 import sys
 from pathlib import Path
 
-from fastapi import Body, File, Header, HTTPException, Query, Request, UploadFile
+from fastapi import Body, File, Header, HTTPException, Query, Request, Response, UploadFile
 from fastapi.responses import JSONResponse
 
 
@@ -54,6 +54,7 @@ load_split_service_env(service_name='gateway-bff')
 
 DEFAULT_UPSTREAM_TIMEOUT_SECONDS = 10.0
 TRANSIENT_WORD_AUDIO_CACHE_ERROR_STATUSES = frozenset({502, 503, 504})
+_requests_total = 0
 
 
 def _upstream_timeout_seconds() -> float:
@@ -152,6 +153,29 @@ app = create_service_app(
 app.include_router(browser_compat_router)
 
 
+@app.middleware('http')
+async def observe_requests(request: Request, call_next):
+    global _requests_total
+    if request.url.path != '/metrics':
+        _requests_total += 1
+    return await call_next(request)
+
+
+@app.get('/metrics', include_in_schema=False)
+def metrics() -> Response:
+    return Response(
+        content=(
+            '# HELP axi_ielts_gateway_bff_requests_total Total HTTP requests handled by the gateway BFF.\n'
+            '# TYPE axi_ielts_gateway_bff_requests_total counter\n'
+            f'axi_ielts_gateway_bff_requests_total {_requests_total}\n'
+            '# HELP axi_ielts_gateway_bff_up Whether the gateway BFF is serving requests.\n'
+            '# TYPE axi_ielts_gateway_bff_up gauge\n'
+            'axi_ielts_gateway_bff_up 1\n'
+        ),
+        media_type='text/plain; version=0.0.4',
+    )
+
+
 @app.get('/api/tts/voices')
 def get_tts_voices_proxy(request: Request, provider: str | None = Query(default=None)):
     return fetch_tts_voices(provider=provider, headers=build_forward_headers(request, target_service_name='tts-media-service'))
@@ -242,6 +266,10 @@ def get_word_audio_proxy(
         if payload is not None:
             return _audio_content_response(payload, source='oss')
     if cache_only == '1':
+        if request.headers.get('x-audio-cache-probe') == '1':
+            response = Response(status_code=204)
+            response.headers['X-Audio-Source'] = 'missing'
+            return response
         return JSONResponse(status_code=404, content={'error': 'word audio cache miss'})
     generate_payload = {
         'text': request_info['word'],
@@ -249,6 +277,9 @@ def get_word_audio_proxy(
         'model': request_info['model'].split('@', 1)[0],
         'voice_id': request_info['voice'],
         'content_mode': 'word',
+        'word_audio_file_name': request_info['file_name'],
+        'word_audio_model': request_info['model'],
+        'word_audio_voice': request_info['voice'],
     }
     if request_info.get('phonetic'):
         generate_payload['phonetic'] = request_info['phonetic']

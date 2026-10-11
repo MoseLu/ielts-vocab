@@ -126,6 +126,34 @@ describe('QuickMemoryMode session duration summary', () => {
     }))
   })
 
+  it('shows immediate duration and chapter totals while final logging is pending', async () => {
+    logSessionMock.mockImplementation(() => new Promise<void>(() => {}))
+    const { container } = render(
+      <QuickMemoryMode
+        vocabulary={vocabulary}
+        queue={[0]}
+        settings={settings}
+        bookId="book-1"
+        chapterId="1"
+        bookChapters={[{ id: '1', title: 'Chapter 1' }]}
+        chapterQueueWords={Array.from({ length: 50 }, (_, index) => `word-${index}`)}
+        onModeChange={() => {}}
+        onNavigate={() => {}}
+        onWrongWord={() => {}}
+      />,
+    )
+
+    await revealKnown(container)
+    vi.setSystemTime(new Date('2026-04-07T00:00:45.000Z'))
+    await goNext(container)
+
+    expect(screen.getByText('本次用时')).toBeInTheDocument()
+    expect(screen.getByText('45秒')).toBeInTheDocument()
+    expect(screen.getByText('本轮已答')).toBeInTheDocument()
+    expect(screen.getByText('本章总词')).toBeInTheDocument()
+    expect(screen.getByText('50')).toBeInTheDocument()
+  })
+
   it('shows session duration in chapter-scoped review summary', async () => {
     const { container } = render(
       <QuickMemoryMode

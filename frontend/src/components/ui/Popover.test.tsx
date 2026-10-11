@@ -54,6 +54,43 @@ describe('Popover', () => {
     expect(panel.style.visibility).toBe('hidden')
   })
 
+  it('merges trigger props onto the provided button instead of wrapping it in a div', async () => {
+    const user = userEvent.setup()
+
+    const { container } = render(
+      <Popover
+        trigger={<button type="button">Avatar</button>}
+      >
+        <div>Menu</div>
+      </Popover>,
+    )
+
+    const trigger = screen.getByRole('button', { name: 'Avatar' })
+    expect(trigger.tagName).toBe('BUTTON')
+    expect(container.querySelector('.popover-trigger')).toBeNull()
+
+    await user.click(trigger)
+    expect(trigger).toHaveAttribute('aria-expanded', 'true')
+    expect(trigger).toHaveAttribute('aria-controls')
+    expect(trigger).not.toHaveAttribute('aria-haspopup')
+  })
+
+  it('preserves a forwarded trigger ref while registering the floating reference', () => {
+    const triggerRef = React.createRef<HTMLButtonElement>()
+    const Trigger = React.forwardRef<HTMLButtonElement>((_, ref) => (
+      <button ref={ref} type="button">Forwarded trigger</button>
+    ))
+
+    render(
+      <Popover trigger={<Trigger ref={triggerRef} />}>
+        <div>Menu</div>
+      </Popover>,
+    )
+
+    expect(triggerRef.current).toBe(screen.getByRole('button', { name: 'Forwarded trigger' }))
+    expect(screen.getByRole('button', { name: 'Forwarded trigger' })).toBeInTheDocument()
+  })
+
   it('positions the panel with resolved coordinates', async () => {
     const user = userEvent.setup()
     floatingState.x = 160

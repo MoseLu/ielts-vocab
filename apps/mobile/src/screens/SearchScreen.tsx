@@ -79,6 +79,7 @@ export function SearchScreen({
             ref={inputRef}
             returnKeyType="search"
             style={styles.searchInput}
+            testID="search.input"
             value={term}
           />
         </View>
@@ -88,6 +89,7 @@ export function SearchScreen({
         contentContainerStyle={styles.content}
         keyboardDismissMode="on-drag"
         keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
         style={styles.scroll}
       >
         <StatusText error={error} loading={loading} />
@@ -99,7 +101,7 @@ export function SearchScreen({
               {word.phonetic} {word.pos}
             </Meta>
             <Body>{word.definition}</Body>
-            <PrimaryButton label="查看详情" onPress={() => void openDetails(word.word).catch(err => setError(err.message))} />
+            <PrimaryButton label="查看详情" onPress={() => void openDetails(word.word).catch(err => setError(err.message))} testID="search.wordDetails" />
           </Card>
         ))}
 
@@ -115,8 +117,8 @@ export function SearchScreen({
           <Card>
             <Heading>词条详情</Heading>
             <Meta>{details}</Meta>
-            <Field value={note} onChangeText={setNote} placeholder="词条笔记" multiline />
-            <PrimaryButton label="保存笔记" onPress={() => void saveWordNote(term, note).catch(err => setError(err.message))} />
+            <Field value={note} onChangeText={setNote} placeholder="词条笔记" multiline testID="search.note" />
+            <PrimaryButton label="保存笔记" onPress={() => void saveWordNote(term, note).catch(err => setError(err.message))} testID="search.saveNote" />
           </Card>
         ) : null}
       </ScrollView>

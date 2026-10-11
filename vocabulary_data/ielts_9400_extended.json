@@ -65386,8 +65386,4230 @@
           "source": "ielts_9400_xls"
         }
       ]
+    },
+    {
+      "id": 94,
+      "title": "补充词汇 0001-0100",
+      "word_count": 100,
+      "source": "ielts_vocab_supplement",
+      "words": [
+        {
+          "word": "bin",
+          "pos": "noun",
+          "definition": "垃圾箱",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "bored",
+          "pos": "adjective",
+          "definition": "无聊的",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "a great deal of",
+          "pos": "fixed phrase",
+          "definition": "大量的",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "a large number of",
+          "pos": "fixed phrase",
+          "definition": "大量的",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "according to",
+          "pos": "prepositional phrase",
+          "definition": "根据",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "afterwards",
+          "pos": "adverb",
+          "definition": "后来",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "already",
+          "pos": "adverb",
+          "definition": "已经",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "amazing",
+          "pos": "adjective",
+          "definition": "令人惊奇的",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "annoying",
+          "pos": "adjective",
+          "definition": "烦人的",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "apply for",
+          "pos": "phrasal verb",
+          "definition": "申请",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "armed",
+          "pos": "adjective",
+          "definition": "武装的",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "as a result",
+          "pos": "prepositional phrase",
+          "definition": "结果",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "as far as",
+          "pos": "prepositional phrase",
+          "definition": "至于",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "as for",
+          "pos": "prepositional phrase",
+          "definition": "至于",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "as long as",
+          "pos": "prepositional phrase",
+          "definition": "只要",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "as soon as",
+          "pos": "prepositional phrase",
+          "definition": "一...就",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "as well as",
+          "pos": "prepositional phrase",
+          "definition": "也",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "at least",
+          "pos": "prepositional phrase",
+          "definition": "至少",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "at most",
+          "pos": "prepositional phrase",
+          "definition": "至多",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "at the same time",
+          "pos": "fixed phrase",
+          "definition": "同时",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "backwards",
+          "pos": "adverb",
+          "definition": "向后",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "based",
+          "pos": "adjective",
+          "definition": "基于",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "because of",
+          "pos": "prepositional phrase",
+          "definition": "因为",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "behaviour",
+          "pos": "noun",
+          "definition": "行为",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "belong to",
+          "pos": "phrasal verb",
+          "definition": "属于",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "blog",
+          "pos": "noun",
+          "definition": "博客",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "bookshop",
+          "pos": "noun",
+          "definition": "书店",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "care for",
+          "pos": "phrasal verb",
+          "definition": "关心",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "check in",
+          "pos": "phrasal verb",
+          "definition": "登记入住",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "check out",
+          "pos": "phrasal verb",
+          "definition": "结账离开",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "coffee shop",
+          "pos": "noun",
+          "definition": "咖啡店",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "convenience store",
+          "pos": "noun",
+          "definition": "便利店",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "count on",
+          "pos": "phrasal verb",
+          "definition": "指望",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "deal with",
+          "pos": "phrasal verb",
+          "definition": "处理",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "depend on",
+          "pos": "phrasal verb",
+          "definition": "依赖",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "dining room",
+          "pos": "noun",
+          "definition": "餐厅",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "fall behind",
+          "pos": "phrasal verb",
+          "definition": "落后",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "figure out",
+          "pos": "phrasal verb",
+          "definition": "弄明白",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "fill in",
+          "pos": "phrasal verb",
+          "definition": "填写",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "fill out",
+          "pos": "phrasal verb",
+          "definition": "填写",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "for example",
+          "pos": "fixed phrase",
+          "definition": "例如",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "for instance",
+          "pos": "fixed phrase",
+          "definition": "例如",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "get along with",
+          "pos": "phrasal verb",
+          "definition": "相处",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "get rid of",
+          "pos": "phrasal verb",
+          "definition": "摆脱",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "give up",
+          "pos": "phrasal verb",
+          "definition": "放弃",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "go over",
+          "pos": "phrasal verb",
+          "definition": "复习",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "gym",
+          "pos": "noun",
+          "definition": "健身房",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "happen to",
+          "pos": "phrasal verb",
+          "definition": "碰巧",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "head for",
+          "pos": "phrasal verb",
+          "definition": "前往",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "health center",
+          "pos": "noun",
+          "definition": "健康中心",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "hear from",
+          "pos": "phrasal verb",
+          "definition": "收到...来信",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "high school",
+          "pos": "noun",
+          "definition": "高中",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "in case of",
+          "pos": "prepositional phrase",
+          "definition": "万一",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "in charge of",
+          "pos": "prepositional phrase",
+          "definition": "负责",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "in fact",
+          "pos": "fixed phrase",
+          "definition": "事实上",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "in front of",
+          "pos": "prepositional phrase",
+          "definition": "在...前面",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "in general",
+          "pos": "fixed phrase",
+          "definition": "一般来说",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "in order to",
+          "pos": "fixed phrase",
+          "definition": "为了",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "in other words",
+          "pos": "fixed phrase",
+          "definition": "换句话说",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "information desk",
+          "pos": "noun",
+          "definition": "咨询台",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "instead of",
+          "pos": "prepositional phrase",
+          "definition": "代替",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "keep up with",
+          "pos": "phrasal verb",
+          "definition": "跟上",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "lecture hall",
+          "pos": "noun",
+          "definition": "阶梯教室",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "live on",
+          "pos": "phrasal verb",
+          "definition": "靠...生活",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "living room",
+          "pos": "noun",
+          "definition": "客厅",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "look after",
+          "pos": "phrasal verb",
+          "definition": "照顾",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "look forward to",
+          "pos": "phrasal verb",
+          "definition": "期待",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "make out",
+          "pos": "phrasal verb",
+          "definition": "辨认出",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "make up",
+          "pos": "phrasal verb",
+          "definition": "组成，编造",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "more and more",
+          "pos": "fixed phrase",
+          "definition": "越来越多",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "more or less",
+          "pos": "fixed phrase",
+          "definition": "或多或少",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "no longer",
+          "pos": "fixed phrase",
+          "definition": "不再",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "not only...but also",
+          "pos": "fixed phrase",
+          "definition": "不仅...而且",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "on the other hand",
+          "pos": "fixed phrase",
+          "definition": "另一方面",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "parking lot",
+          "pos": "noun",
+          "definition": "停车场",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "pay for",
+          "pos": "phrasal verb",
+          "definition": "支付",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "photocopy",
+          "pos": "noun",
+          "definition": "复印件",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "pick up",
+          "pos": "phrasal verb",
+          "definition": "捡起，学会",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "post office",
+          "pos": "noun",
+          "definition": "邮局",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "prepare for",
+          "pos": "phrasal verb",
+          "definition": "准备",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "pull up",
+          "pos": "phrasal verb",
+          "definition": "停下",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "put away",
+          "pos": "phrasal verb",
+          "definition": "收起来",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "put off",
+          "pos": "phrasal verb",
+          "definition": "推迟",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "put on",
+          "pos": "phrasal verb",
+          "definition": "穿上",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "reference room",
+          "pos": "noun",
+          "definition": "资料室",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "roommate",
+          "pos": "noun",
+          "definition": "室友",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "run out of",
+          "pos": "phrasal verb",
+          "definition": "用完",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "set off",
+          "pos": "phrasal verb",
+          "definition": "出发",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "settle down",
+          "pos": "phrasal verb",
+          "definition": "定居",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "shopping center",
+          "pos": "noun",
+          "definition": "购物中心",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "show up",
+          "pos": "phrasal verb",
+          "definition": "出现",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "similarly",
+          "pos": "adverb",
+          "definition": "同样",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "slow down",
+          "pos": "phrasal verb",
+          "definition": "减速",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "so far",
+          "pos": "fixed phrase",
+          "definition": "到目前为止",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "sort out",
+          "pos": "phrasal verb",
+          "definition": "解决",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "speak up",
+          "pos": "phrasal verb",
+          "definition": "大声说",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "stick to",
+          "pos": "phrasal verb",
+          "definition": "坚持",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "such as",
+          "pos": "fixed phrase",
+          "definition": "例如",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "switch off",
+          "pos": "phrasal verb",
+          "definition": "关掉",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "switch on",
+          "pos": "phrasal verb",
+          "definition": "打开",
+          "source": "local:ielts_vocabulary_complete.json"
+        }
+      ]
+    },
+    {
+      "id": 95,
+      "title": "补充词汇 0101-0200",
+      "word_count": 100,
+      "source": "ielts_vocab_supplement",
+      "words": [
+        {
+          "word": "take after",
+          "pos": "phrasal verb",
+          "definition": "像",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "take away",
+          "pos": "phrasal verb",
+          "definition": "拿走",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "take care of",
+          "pos": "phrasal verb",
+          "definition": "照顾",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "take off",
+          "pos": "phrasal verb",
+          "definition": "起飞",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "talk over",
+          "pos": "phrasal verb",
+          "definition": "讨论",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "tell off",
+          "pos": "phrasal verb",
+          "definition": "责备",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "thanks to",
+          "pos": "prepositional phrase",
+          "definition": "多亏",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "theater",
+          "pos": "noun",
+          "definition": "剧院",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "think over",
+          "pos": "phrasal verb",
+          "definition": "仔细考虑",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "throw away",
+          "pos": "phrasal verb",
+          "definition": "扔掉",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "try on",
+          "pos": "phrasal verb",
+          "definition": "试穿",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "try out",
+          "pos": "phrasal verb",
+          "definition": "试用",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "turn down",
+          "pos": "phrasal verb",
+          "definition": "拒绝，调小",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "turn off",
+          "pos": "phrasal verb",
+          "definition": "关掉",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "turn on",
+          "pos": "phrasal verb",
+          "definition": "打开",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "turn up",
+          "pos": "phrasal verb",
+          "definition": "出现，调大",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "use up",
+          "pos": "phrasal verb",
+          "definition": "用完",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "waiting room",
+          "pos": "noun",
+          "definition": "候诊室",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "wake up",
+          "pos": "phrasal verb",
+          "definition": "醒来",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "warm up",
+          "pos": "phrasal verb",
+          "definition": "热身",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "watch out",
+          "pos": "phrasal verb",
+          "definition": "小心",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "work on",
+          "pos": "phrasal verb",
+          "definition": "从事",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "work out",
+          "pos": "phrasal verb",
+          "definition": "解决，锻炼",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "write down",
+          "pos": "phrasal verb",
+          "definition": "写下",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "youth hostel",
+          "pos": "noun",
+          "definition": "青年旅社",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "a wide range of",
+          "pos": "fixed phrase",
+          "definition": "广泛的",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "account for",
+          "pos": "phrasal verb",
+          "definition": "解释，占",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "adapt to",
+          "pos": "phrasal verb",
+          "definition": "适应",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "addiction",
+          "pos": "noun",
+          "definition": "上瘾",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "additionally",
+          "pos": "adverb",
+          "definition": "此外",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "aim at",
+          "pos": "phrasal verb",
+          "definition": "旨在",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "allow for",
+          "pos": "phrasal verb",
+          "definition": "考虑到",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "alternatively",
+          "pos": "adverb",
+          "definition": "或者",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "analyse",
+          "pos": "verb",
+          "definition": "分析",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "apart from",
+          "pos": "prepositional phrase",
+          "definition": "除了",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "associate with",
+          "pos": "phrasal verb",
+          "definition": "与...有关",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "awareness",
+          "pos": "noun",
+          "definition": "意识",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "bacteria",
+          "pos": "noun",
+          "definition": "细菌",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "base on",
+          "pos": "phrasal verb",
+          "definition": "基于",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "benefit from",
+          "pos": "phrasal verb",
+          "definition": "受益于",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "by means of",
+          "pos": "prepositional phrase",
+          "definition": "通过",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "call for",
+          "pos": "phrasal verb",
+          "definition": "需要",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "cater for",
+          "pos": "phrasal verb",
+          "definition": "迎合",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "comply with",
+          "pos": "phrasal verb",
+          "definition": "遵守",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "consist of",
+          "pos": "phrasal verb",
+          "definition": "由...组成",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "continually",
+          "pos": "adverb",
+          "definition": "持续地",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "cope with",
+          "pos": "phrasal verb",
+          "definition": "应对",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "cut down on",
+          "pos": "phrasal verb",
+          "definition": "削减",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "devote to",
+          "pos": "phrasal verb",
+          "definition": "致力于",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "dispose of",
+          "pos": "phrasal verb",
+          "definition": "处理",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "dramatically",
+          "pos": "adverb",
+          "definition": "显著地",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "draw on",
+          "pos": "phrasal verb",
+          "definition": "利用",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "due to",
+          "pos": "prepositional phrase",
+          "definition": "由于",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "engage in",
+          "pos": "phrasal verb",
+          "definition": "从事",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "equip with",
+          "pos": "phrasal verb",
+          "definition": "配备",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "except for",
+          "pos": "prepositional phrase",
+          "definition": "除了",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "facilities",
+          "pos": "noun",
+          "definition": "设施",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "focus on",
+          "pos": "phrasal verb",
+          "definition": "集中于",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "in addition to",
+          "pos": "prepositional phrase",
+          "definition": "除了",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "in comparison with",
+          "pos": "prepositional phrase",
+          "definition": "与...相比",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "in conclusion",
+          "pos": "fixed phrase",
+          "definition": "总之",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "in contrast to",
+          "pos": "prepositional phrase",
+          "definition": "与...对比",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "in favor of",
+          "pos": "prepositional phrase",
+          "definition": "支持",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "in particular",
+          "pos": "fixed phrase",
+          "definition": "尤其",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "in short",
+          "pos": "fixed phrase",
+          "definition": "简言之",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "in spite of",
+          "pos": "prepositional phrase",
+          "definition": "尽管",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "in terms of",
+          "pos": "prepositional phrase",
+          "definition": "就...而言",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "insist on",
+          "pos": "phrasal verb",
+          "definition": "坚持",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "interact with",
+          "pos": "phrasal verb",
+          "definition": "互动",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "invest in",
+          "pos": "phrasal verb",
+          "definition": "投资",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "lay off",
+          "pos": "phrasal verb",
+          "definition": "解雇",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "lead to",
+          "pos": "phrasal verb",
+          "definition": "导致",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "leave out",
+          "pos": "phrasal verb",
+          "definition": "省略",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "look into",
+          "pos": "phrasal verb",
+          "definition": "调查",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "object to",
+          "pos": "phrasal verb",
+          "definition": "反对",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "on average",
+          "pos": "fixed phrase",
+          "definition": "平均",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "on the contrary",
+          "pos": "prepositional phrase",
+          "definition": "相反",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "participate in",
+          "pos": "phrasal verb",
+          "definition": "参与",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "point out",
+          "pos": "phrasal verb",
+          "definition": "指出",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "potentially",
+          "pos": "adverb",
+          "definition": "潜在地",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "prevent from",
+          "pos": "phrasal verb",
+          "definition": "阻止",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "put up with",
+          "pos": "phrasal verb",
+          "definition": "忍受",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "refer to",
+          "pos": "phrasal verb",
+          "definition": "参考，指的是",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "regardless of",
+          "pos": "prepositional phrase",
+          "definition": "不管",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "rely on",
+          "pos": "phrasal verb",
+          "definition": "依赖",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "result in",
+          "pos": "phrasal verb",
+          "definition": "导致",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "set out",
+          "pos": "phrasal verb",
+          "definition": "出发，开始",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "set up",
+          "pos": "phrasal verb",
+          "definition": "建立",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "shut down",
+          "pos": "phrasal verb",
+          "definition": "关闭",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "significantly",
+          "pos": "adverb",
+          "definition": "显著地",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "speak out",
+          "pos": "phrasal verb",
+          "definition": "大声说",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "specifically",
+          "pos": "adverb",
+          "definition": "具体地",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "speed up",
+          "pos": "phrasal verb",
+          "definition": "加速",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "stand for",
+          "pos": "phrasal verb",
+          "definition": "代表",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "stand out",
+          "pos": "phrasal verb",
+          "definition": "突出",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "start up",
+          "pos": "phrasal verb",
+          "definition": "启动",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "subscribe to",
+          "pos": "phrasal verb",
+          "definition": "订阅",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "suffer from",
+          "pos": "phrasal verb",
+          "definition": "遭受",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "take on",
+          "pos": "phrasal verb",
+          "definition": "承担",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "take over",
+          "pos": "phrasal verb",
+          "definition": "接管",
+          "source": "local:ielts_vocabulary_complete.json"
+        }
+      ]
+    },
+    {
+      "id": 96,
+      "title": "补充词汇 0201-0300",
+      "word_count": 100,
+      "source": "ielts_vocab_supplement",
+      "words": [
+        {
+          "word": "take up",
+          "pos": "phrasal verb",
+          "definition": "开始从事",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "temporarily",
+          "pos": "adverb",
+          "definition": "暂时",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "to some extent",
+          "pos": "fixed phrase",
+          "definition": "在某种程度上",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "traditionally",
+          "pos": "adverb",
+          "definition": "传统上",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "translate into",
+          "pos": "phrasal verb",
+          "definition": "翻译成",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "turn into",
+          "pos": "phrasal verb",
+          "definition": "变成",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "turn out",
+          "pos": "phrasal verb",
+          "definition": "结果是",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "with regard to",
+          "pos": "prepositional phrase",
+          "definition": "关于",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "affordability",
+          "pos": "noun",
+          "definition": "负担能力",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "appalling",
+          "pos": "adjective",
+          "definition": "可怕的",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "append",
+          "pos": "verb",
+          "definition": "附加",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "coincidentally",
+          "pos": "adverb",
+          "definition": "巧合地",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "collectively",
+          "pos": "adverb",
+          "definition": "共同地",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "concurrently",
+          "pos": "adverb",
+          "definition": "同时地",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "consistently",
+          "pos": "adverb",
+          "definition": "一贯地",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "derive from",
+          "pos": "phrasal verb",
+          "definition": "源自",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "dwell on",
+          "pos": "phrasal verb",
+          "definition": "详述",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "fundamentally",
+          "pos": "adverb",
+          "definition": "根本上",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "in accordance with",
+          "pos": "prepositional phrase",
+          "definition": "按照",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "labour",
+          "pos": "noun",
+          "definition": "劳动",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "lie in",
+          "pos": "phrasal verb",
+          "definition": "在于",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "on account of",
+          "pos": "prepositional phrase",
+          "definition": "因为",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "on behalf of",
+          "pos": "prepositional phrase",
+          "definition": "代表",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "prior to",
+          "pos": "prepositional phrase",
+          "definition": "在...之前",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "prohibit from",
+          "pos": "phrasal verb",
+          "definition": "禁止",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "remarkably",
+          "pos": "adverb",
+          "definition": "显著地",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "substantially",
+          "pos": "adverb",
+          "definition": "实质上",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "with respect to",
+          "pos": "prepositional phrase",
+          "definition": "关于",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "administrate",
+          "pos": "verb",
+          "definition": "管理",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "equate",
+          "pos": "verb",
+          "definition": "等同",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "criteria",
+          "pos": "noun",
+          "definition": "标准",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "maximise",
+          "pos": "verb",
+          "definition": "最大化",
+          "source": "local:ielts_vocabulary_complete.json"
+        },
+        {
+          "word": "a",
+          "source": "web:eap_gsl"
+        },
+        {
+          "word": "amongst",
+          "source": "web:eap_gsl"
+        },
+        {
+          "word": "avoidance",
+          "source": "web:eap_gsl"
+        },
+        {
+          "word": "axe",
+          "source": "web:eap_gsl"
+        },
+        {
+          "word": "businessman",
+          "source": "web:eap_gsl"
+        },
+        {
+          "word": "centre",
+          "source": "web:eap_gsl"
+        },
+        {
+          "word": "christmas",
+          "source": "web:eap_gsl"
+        },
+        {
+          "word": "cold",
+          "source": "web:eap_gsl"
+        },
+        {
+          "word": "collector",
+          "source": "web:eap_gsl"
+        },
+        {
+          "word": "colour",
+          "source": "web:eap_gsl"
+        },
+        {
+          "word": "companionship",
+          "source": "web:eap_gsl"
+        },
+        {
+          "word": "could",
+          "source": "web:eap_gsl"
+        },
+        {
+          "word": "cowardice",
+          "source": "web:eap_gsl"
+        },
+        {
+          "word": "cultivator",
+          "source": "web:eap_gsl"
+        },
+        {
+          "word": "disapprove",
+          "source": "web:eap_gsl"
+        },
+        {
+          "word": "discontent",
+          "source": "web:eap_gsl"
+        },
+        {
+          "word": "disrespect",
+          "source": "web:eap_gsl"
+        },
+        {
+          "word": "educator",
+          "source": "web:eap_gsl"
+        },
+        {
+          "word": "english",
+          "source": "web:eap_gsl"
+        },
+        {
+          "word": "false",
+          "source": "web:eap_gsl"
+        },
+        {
+          "word": "fatten",
+          "source": "web:eap_gsl"
+        },
+        {
+          "word": "favourite",
+          "source": "web:eap_gsl"
+        },
+        {
+          "word": "gaiety",
+          "source": "web:eap_gsl"
+        },
+        {
+          "word": "handshake",
+          "source": "web:eap_gsl"
+        },
+        {
+          "word": "headdress",
+          "source": "web:eap_gsl"
+        },
+        {
+          "word": "heavenly",
+          "source": "web:eap_gsl"
+        },
+        {
+          "word": "homecoming",
+          "source": "web:eap_gsl"
+        },
+        {
+          "word": "homemade",
+          "source": "web:eap_gsl"
+        },
+        {
+          "word": "honour",
+          "source": "web:eap_gsl"
+        },
+        {
+          "word": "i",
+          "source": "web:eap_gsl"
+        },
+        {
+          "word": "lead",
+          "source": "web:eap_gsl"
+        },
+        {
+          "word": "moderation",
+          "source": "web:eap_gsl"
+        },
+        {
+          "word": "motherhood",
+          "source": "web:eap_gsl"
+        },
+        {
+          "word": "motherly",
+          "source": "web:eap_gsl"
+        },
+        {
+          "word": "neighbour",
+          "source": "web:eap_gsl"
+        },
+        {
+          "word": "neighbourhood",
+          "source": "web:eap_gsl"
+        },
+        {
+          "word": "old-fashioned",
+          "source": "web:eap_gsl"
+        },
+        {
+          "word": "organise",
+          "source": "web:eap_gsl"
+        },
+        {
+          "word": "possessor",
+          "source": "web:eap_gsl"
+        },
+        {
+          "word": "pretence",
+          "source": "web:eap_gsl"
+        },
+        {
+          "word": "programme",
+          "source": "web:eap_gsl"
+        },
+        {
+          "word": "read",
+          "source": "web:eap_gsl"
+        },
+        {
+          "word": "realise",
+          "source": "web:eap_gsl"
+        },
+        {
+          "word": "recognise",
+          "source": "web:eap_gsl"
+        },
+        {
+          "word": "redden",
+          "source": "web:eap_gsl"
+        },
+        {
+          "word": "sadden",
+          "source": "web:eap_gsl"
+        },
+        {
+          "word": "stiffen",
+          "source": "web:eap_gsl"
+        },
+        {
+          "word": "treasury",
+          "source": "web:eap_gsl"
+        },
+        {
+          "word": "true",
+          "source": "web:eap_gsl"
+        },
+        {
+          "word": "uppermost",
+          "source": "web:eap_gsl"
+        },
+        {
+          "word": "weaken",
+          "source": "web:eap_gsl"
+        },
+        {
+          "word": "whiten",
+          "source": "web:eap_gsl"
+        },
+        {
+          "word": "woolen",
+          "source": "web:eap_gsl"
+        },
+        {
+          "word": "would",
+          "source": "web:eap_gsl"
+        },
+        {
+          "word": "occurence",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "ethical",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "media",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "replicate",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "statistic",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "discriminant",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "discriminative",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "ethics",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "eventual",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "infrastructure",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "invoke",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "nonetheless",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "paradigm",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "albeit",
+          "source": "web:vocabularyforielts_top2500"
+        }
+      ]
+    },
+    {
+      "id": 97,
+      "title": "补充词汇 0301-0400",
+      "word_count": 100,
+      "source": "ielts_vocab_supplement",
+      "words": [
+        {
+          "word": "adjunct",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "advocacy",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "amenity",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "anomaly",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "archive",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "attest",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "beacon",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "bearable",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "beckon",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "behold",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "believable",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "benchmark",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "bespoke",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "biodiversity",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "blockbuster",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "blueprint",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "borough",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "botanist",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "buffer",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "butchered",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "cache",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "cactus",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "caliber",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "callous",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "camaraderie",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "canyon",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "caregiver",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "carnival",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "cascade",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "caste",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "celebrity",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "centuries",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "changeover",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "chaotic",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "childbearing",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "chute",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "clarinet",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "cleanly",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "cleanse",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "clearcut",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "clergy",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "clockwork",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "close-knit",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "coastline",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "coexist",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "colonize",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "compassion",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "competency",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "compliant",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "confiscate",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "consistence",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "contagious",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "cottage industry",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "crude oil",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "cruelty-free",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "cutback",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "deafening",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "debut",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "deceptive",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "dedication",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "defender",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "defensible",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "deforestation",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "demographic",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "deploy",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "deterrent",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "developer",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "dice",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "dieback",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "digress",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "dire",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "disability",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "disharmony",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "disk",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "disruption",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "doer",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "domination",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "donor",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "draught",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "duel",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "dynamics",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "elongated",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "emblem",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "encode",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "ethic",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "ethnicity",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "accountability",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "accountable",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "accustomed",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "acoustic",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "acreage",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "acronym",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "activation",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "affective",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "affidavit",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "affinity",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "aftermath",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "ageing",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "align",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "analyst",
+          "source": "web:vocabularyforielts_top2500"
+        }
+      ]
+    },
+    {
+      "id": 98,
+      "title": "补充词汇 0401-0500",
+      "word_count": 100,
+      "source": "ielts_vocab_supplement",
+      "words": [
+        {
+          "word": "antibody",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "arid",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "armament",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "artful",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "assent",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "astute",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "authorise",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "autograph",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "automated",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "avid",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "babysitter",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "balanced",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "baptize",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "barefoot",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "bask",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "battlefield",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "bedrock",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "belief-system",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "benign",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "blockade",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "bolster",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "botanical",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "brainchild",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "brandish",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "break-even",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "brunch",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "bustling",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "busybody",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "cacao",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "calibre",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "camouflage",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "carefree",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "academic list",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "enrollment",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "pedagogy",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "citation",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "apprenticeship",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "familiarize",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "academician",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "climate change",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "contamination",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "sustainable",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "sustainability",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "fossil fuel",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "habitat",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "endangered",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "landfill",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "conservationist",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "ecosystem services",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "carbon footprint",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "reforest",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "internet",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "algorithm",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "artificial intelligence",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "ai",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "robotics",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "cybersecurity",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "encryption",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "app",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "sensor",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "usability",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "computing",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "simulation",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "analytics",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "bandwidth",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "download",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "healthcare",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "pandemic",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "bacterial",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "psychiatrist",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "mortality",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "morbidity",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "immunity",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "public health",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "obesity",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "prenatal",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "neonatal",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "rehabilitation",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "economic policy",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "workforce",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "investor",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "start-up",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "peer review",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "causation",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "mass media",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "online",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "social media",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "podcast",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "public relations",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "governance",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "public policy",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "rights",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "human rights",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "foreign policy",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "inequality",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "social class",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "social policy",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "lifestyle",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "multicultural",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "transport system",
+          "source": "web:vocabularyforielts_top2500"
+        }
+      ]
+    },
+    {
+      "id": 99,
+      "title": "补充词汇 0501-0600",
+      "word_count": 100,
+      "source": "ielts_vocab_supplement",
+      "words": [
+        {
+          "word": "ielts vocabulary for food",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "fisheries",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "food security",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "culinary",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "famine relief",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "ielts words for energy",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "energy supply",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "hydro",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "mining",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "manufacturing",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "sustainable energy",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "ielts word list for arts",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "critique",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "genre",
+          "source": "web:vocabularyforielts_top2500"
+        },
+        {
+          "word": "make a decision",
+          "pos": "v. coll.",
+          "definition": "To decide.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "come to a conclusion",
+          "pos": "v. coll.",
+          "definition": "To form a judgement after considering something.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "pay attention",
+          "pos": "v. coll.",
+          "definition": "To listen or watch carefully.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "take advantage of",
+          "pos": "v. coll.",
+          "definition": "To use an opportunity well.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "have an impact on",
+          "pos": "v. coll.",
+          "definition": "To affect.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "bear in mind",
+          "pos": "v. coll.",
+          "definition": "To remember when considering something.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "give rise to",
+          "pos": "v. coll.",
+          "definition": "To cause something to happen.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "play a role in",
+          "pos": "v. coll.",
+          "definition": "To be involved in or contribute to.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "raise awareness",
+          "pos": "v. coll.",
+          "definition": "To make people more conscious of an issue.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "broaden one's horizons",
+          "pos": "v. coll.",
+          "definition": "To increase one's range of experience.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "meet a deadline",
+          "pos": "v. coll.",
+          "definition": "To complete something on time.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "take a chance",
+          "pos": "v. coll.",
+          "definition": "To accept a risk.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "have second thoughts",
+          "pos": "v. coll.",
+          "definition": "To begin to doubt a decision.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "save money",
+          "pos": "v. coll.",
+          "definition": "To keep money rather than spend it.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "save time",
+          "pos": "v. coll.",
+          "definition": "To use less time than usual.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "waste money",
+          "pos": "v. coll.",
+          "definition": "To spend money on something pointless.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "raise concerns",
+          "pos": "v. coll.",
+          "definition": "To express worry.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "pursue a career",
+          "pos": "v. coll.",
+          "definition": "To work toward becoming established in a profession.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "strike a balance",
+          "pos": "v. coll.",
+          "definition": "To find a compromise between competing demands.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "gain experience",
+          "pos": "v. coll.",
+          "definition": "To accumulate practical knowledge.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "gain confidence",
+          "pos": "v. coll.",
+          "definition": "To become more sure of oneself.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "catch up with friends",
+          "pos": "v. coll.",
+          "definition": "To meet friends after a period apart.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "keep in touch",
+          "pos": "v. coll.",
+          "definition": "To maintain contact with someone.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "take responsibility",
+          "pos": "v. coll.",
+          "definition": "To accept being accountable for something.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "take pride in",
+          "pos": "v. coll.",
+          "definition": "To feel pleased and satisfied about something.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "come to terms with",
+          "pos": "v. coll.",
+          "definition": "To accept a difficult situation.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "shed light on",
+          "pos": "v. coll.",
+          "definition": "To make something easier to understand.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "get ahead",
+          "pos": "v. coll.",
+          "definition": "To make progress or succeed.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "come up with",
+          "pos": "phr.v.",
+          "definition": "To produce an idea or solution.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "bring about",
+          "pos": "phr.v.",
+          "definition": "To cause to happen.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "set a goal",
+          "pos": "v. coll.",
+          "definition": "To decide on something to aim for.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "make a contribution",
+          "pos": "v. coll.",
+          "definition": "To give something useful to a cause or group.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "draw a conclusion",
+          "pos": "v. coll.",
+          "definition": "To form a judgement based on information.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "offender",
+          "pos": "n.",
+          "definition": "A person who commits a crime.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "capital punishment",
+          "pos": "n.",
+          "definition": "The legally authorised killing of someone as punishment for a crime.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "life sentence",
+          "pos": "n.",
+          "definition": "A prison term lasting many years or the rest of a person's life.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "parole",
+          "pos": "n.",
+          "definition": "Early release from prison under supervision.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "white-collar crime",
+          "pos": "n.",
+          "definition": "Non-violent crime committed by professionals, often for financial gain.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "cybercrime",
+          "pos": "n.",
+          "definition": "Criminal activity carried out using computers or the internet.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "vandalism",
+          "pos": "n.",
+          "definition": "The deliberate destruction of property.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "embezzlement",
+          "pos": "n.",
+          "definition": "The theft of funds entrusted to one's care.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "drug trafficking",
+          "pos": "n.",
+          "definition": "The illegal trade in controlled substances.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "sentencing",
+          "pos": "n.",
+          "definition": "The process of deciding a punishment.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "surveillance",
+          "pos": "n.",
+          "definition": "Close watching, often using cameras.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "law-abiding",
+          "pos": "adj.",
+          "definition": "Obeying the law.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "enforcement",
+          "pos": "n.",
+          "definition": "The act of compelling compliance with a rule or law.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "misdemeanour",
+          "pos": "n.",
+          "definition": "A minor wrongdoing.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "recidivism",
+          "pos": "n.",
+          "definition": "The tendency of a convicted criminal to reoffend.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "restorative justice",
+          "pos": "n.",
+          "definition": "A justice approach focused on repairing harm rather than punishment alone.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "tuition fees",
+          "pos": "n.",
+          "definition": "The amount of money charged by a university for teaching.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "distance learning",
+          "pos": "n.",
+          "definition": "Education delivered remotely, typically through online platforms.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "rote learning",
+          "pos": "n.",
+          "definition": "Memorising information through repetition without understanding it deeply.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "critical thinking",
+          "pos": "n.",
+          "definition": "The ability to analyse information objectively to form a judgement.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "lifelong learning",
+          "pos": "n.",
+          "definition": "Continuing to study and develop new skills throughout adulthood.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "mentor",
+          "pos": "n. / v.",
+          "definition": "An experienced person who advises a less experienced one.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "peer pressure",
+          "pos": "n.",
+          "definition": "The influence of one's classmates or contemporaries on behaviour and choices.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "drop-out rate",
+          "pos": "n.",
+          "definition": "The percentage of students who leave a course before completing it.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "academic achievement",
+          "pos": "n.",
+          "definition": "The level of success a student attains in their studies.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "extracurricular",
+          "pos": "adj.",
+          "definition": "Outside the main curriculum, but offered by the school.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "plagiarism",
+          "pos": "n.",
+          "definition": "The use of someone else's work or ideas without acknowledgement.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "transferable skills",
+          "pos": "n.",
+          "definition": "Skills useful across many jobs, such as teamwork or communication.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "qualifications",
+          "pos": "n.",
+          "definition": "The official certificates or degrees a person has earned.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "mature student",
+          "pos": "n.",
+          "definition": "A student who begins university later than the standard age.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "literacy rate",
+          "pos": "n.",
+          "definition": "The proportion of a population that can read and write.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "co-educational",
+          "pos": "adj.",
+          "definition": "Educating boys and girls in the same school.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "alma mater",
+          "pos": "n.",
+          "definition": "The school or university that a person attended.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "global warming",
+          "pos": "n.",
+          "definition": "The gradual rise in Earth's surface temperature.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "greenhouse gas",
+          "pos": "n.",
+          "definition": "A gas such as carbon dioxide or methane that traps heat in the atmosphere.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "emissions",
+          "pos": "n.",
+          "definition": "Substances, usually gases, released into the atmosphere.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "fossil fuels",
+          "pos": "n.",
+          "definition": "Fuels formed from prehistoric plants and animals, including coal, oil, and gas.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "renewable energy",
+          "pos": "n.",
+          "definition": "Energy from sources that naturally replenish, such as wind or sunlight.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "sustainable development",
+          "pos": "n.",
+          "definition": "Economic development that meets present needs without compromising the future.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "habitat loss",
+          "pos": "n.",
+          "definition": "The reduction or destruction of an environment in which a species lives.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "endangered species",
+          "pos": "n.",
+          "definition": "An animal or plant at serious risk of extinction.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "single-use plastic",
+          "pos": "n.",
+          "definition": "Plastic items designed to be used once and discarded.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "eco-friendly",
+          "pos": "adj.",
+          "definition": "Not harmful to the environment.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "energy-efficient",
+          "pos": "adj.",
+          "definition": "Using less energy to perform the same task.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "sea level rise",
+          "pos": "n.",
+          "definition": "An increase in average sea level, mainly caused by melting ice and warming oceans.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "wildlife sanctuary",
+          "pos": "n.",
+          "definition": "A protected area where animals live in their natural habitat.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "reforestation",
+          "pos": "n.",
+          "definition": "The replanting of trees in areas where forests have been cleared.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "overfishing",
+          "pos": "n.",
+          "definition": "Catching fish faster than populations can recover.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "carbon neutral",
+          "pos": "adj.",
+          "definition": "Producing no net release of carbon dioxide overall.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "ozone layer",
+          "pos": "n.",
+          "definition": "The layer of gas in the upper atmosphere that absorbs harmful solar radiation.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "air quality",
+          "pos": "n.",
+          "definition": "How polluted or clean the air is.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "nuclear family",
+          "pos": "n.",
+          "definition": "A family unit consisting of two parents and their children.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "extended family",
+          "pos": "n.",
+          "definition": "A family that includes relatives beyond parents and children.",
+          "source": "web:ieltsfreetests_topics"
+        }
+      ]
+    },
+    {
+      "id": 100,
+      "title": "补充词汇 0601-0700",
+      "word_count": 100,
+      "source": "ielts_vocab_supplement",
+      "words": [
+        {
+          "word": "generation gap",
+          "pos": "n.",
+          "definition": "Differences in attitudes between younger and older people.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "sibling",
+          "pos": "n.",
+          "definition": "A brother or sister.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "single-parent family",
+          "pos": "n.",
+          "definition": "A family with one parent looking after the children.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "divorce rate",
+          "pos": "n.",
+          "definition": "The proportion of marriages that end in divorce.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "ageing population",
+          "pos": "n.",
+          "definition": "A population in which older people make up a growing share.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "social cohesion",
+          "pos": "n.",
+          "definition": "The bonds that hold a community together.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "multiculturalism",
+          "pos": "n.",
+          "definition": "The presence of several distinct cultural groups within one society.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "gender equality",
+          "pos": "n.",
+          "definition": "Equal rights and opportunities for people of any gender.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "social mobility",
+          "pos": "n.",
+          "definition": "The ability of people to move between social or economic classes.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "urbanisation",
+          "pos": "n.",
+          "definition": "The process by which towns and cities grow as people move from rural areas.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "role model",
+          "pos": "n.",
+          "definition": "A person whose behaviour is admired and imitated by others.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "ancestry",
+          "pos": "n.",
+          "definition": "A person's family origin or descent.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "traditional values",
+          "pos": "n.",
+          "definition": "Customs and beliefs passed down through generations.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "socialise",
+          "pos": "v.",
+          "definition": "To mix with other people; to teach social skills.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "family bond",
+          "pos": "n.",
+          "definition": "A close emotional connection between family members.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "birth rate",
+          "pos": "n.",
+          "definition": "The number of births per thousand people in a year.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "welfare state",
+          "pos": "n.",
+          "definition": "A system in which the government provides essential services to citizens.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "nutritional value",
+          "pos": "n.",
+          "definition": "The amount of nutrients a food contains.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "balanced diet",
+          "pos": "n.",
+          "definition": "A diet that contains the right proportions of all the nutrients the body needs.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "processed food",
+          "pos": "n.",
+          "definition": "Food that has been altered from its natural state through industrial methods.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "fast food",
+          "pos": "n.",
+          "definition": "Mass-produced food prepared quickly and served in restaurants.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "vegan",
+          "pos": "n. / adj.",
+          "definition": "A person who avoids all animal products, including dairy and eggs.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "plant-based",
+          "pos": "adj.",
+          "definition": "Consisting mainly or entirely of plants and plant-derived foods.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "sugar tax",
+          "pos": "n.",
+          "definition": "A tax on sugar-sweetened drinks introduced to reduce consumption.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "preservative",
+          "pos": "n.",
+          "definition": "A substance used to prevent food from spoiling.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "staple food",
+          "pos": "n.",
+          "definition": "A basic food that forms the largest part of a population's diet.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "dairy product",
+          "pos": "n.",
+          "definition": "A food made from milk, such as cheese, butter, or yogurt.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "food waste",
+          "pos": "n.",
+          "definition": "Edible food that is discarded rather than eaten.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "genetically modified",
+          "pos": "adj.",
+          "definition": "Having had genetic material altered through bioengineering.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "dine out",
+          "pos": "phr.v.",
+          "definition": "To eat a meal in a restaurant rather than at home.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "home-cooked",
+          "pos": "adj.",
+          "definition": "Prepared at home rather than bought ready-made.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "globalisation",
+          "pos": "n.",
+          "definition": "The process by which countries become more economically, culturally, and politically interconnected.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "multinational corporation",
+          "pos": "n.",
+          "definition": "A company that operates in multiple countries.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "free trade",
+          "pos": "n.",
+          "definition": "International trade left to its natural course without tariffs or restrictions.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "outsourcing",
+          "pos": "n.",
+          "definition": "The practice of contracting work to external organisations, often abroad.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "offshoring",
+          "pos": "n.",
+          "definition": "The relocation of business processes to another country.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "supply chain",
+          "pos": "n.",
+          "definition": "The network of organisations involved in producing and delivering a product.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "interdependence",
+          "pos": "n.",
+          "definition": "A condition in which countries or people depend on each other.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "cultural exchange",
+          "pos": "n.",
+          "definition": "The sharing of ideas, traditions, and arts between cultures.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "cultural homogenisation",
+          "pos": "n.",
+          "definition": "The process by which cultures become more similar to one another.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "cultural diversity",
+          "pos": "n.",
+          "definition": "The variety of cultures present in a place or community.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "diaspora",
+          "pos": "n.",
+          "definition": "Communities of people living outside their country of origin.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "foreign direct investment",
+          "pos": "n.",
+          "definition": "Investment made by a company or individual in another country.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "emerging economy",
+          "pos": "n.",
+          "definition": "A country that is rapidly industrialising and growing.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "developed country",
+          "pos": "n.",
+          "definition": "A country with a high level of industrialisation and per-capita income.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "developing country",
+          "pos": "n.",
+          "definition": "A country with a less developed industrial base and lower per-capita income.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "sweatshop",
+          "pos": "n.",
+          "definition": "A factory or workshop with very poor working conditions and low wages.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "fair trade",
+          "pos": "n.",
+          "definition": "A trading partnership that ensures producers in developing countries receive a fair price.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "consumer culture",
+          "pos": "n.",
+          "definition": "A society in which the acquisition of goods and services is a major social activity.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "lingua franca",
+          "pos": "n.",
+          "definition": "A language used for communication between speakers whose native languages differ.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "soft power",
+          "pos": "n.",
+          "definition": "The ability of a country to influence others through culture and values rather than force.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "trade deficit",
+          "pos": "n.",
+          "definition": "When a country imports more than it exports in value terms.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "trade surplus",
+          "pos": "n.",
+          "definition": "When a country exports more than it imports in value terms.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "sanctions regime",
+          "pos": "n.",
+          "definition": "A coordinated set of penalties imposed by countries against another country.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "intellectual property",
+          "pos": "n.",
+          "definition": "Rights over creations of the mind, such as inventions and brand names.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "brain drain",
+          "pos": "n.",
+          "definition": "The emigration of highly skilled people from a country.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "bilateral agreement",
+          "pos": "n.",
+          "definition": "A formal agreement between two countries.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "electorate",
+          "pos": "n.",
+          "definition": "All the people in a country or area who are entitled to vote.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "constituency",
+          "pos": "n.",
+          "definition": "An area whose voters elect a representative to parliament.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "civic engagement",
+          "pos": "n.",
+          "definition": "Citizens' participation in the political and community life of their country.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "public services",
+          "pos": "n.",
+          "definition": "Services provided by the government for citizens, such as healthcare, education, and transport.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "taxpayer",
+          "pos": "n.",
+          "definition": "A person who pays taxes.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "transparency",
+          "pos": "n.",
+          "definition": "Openness about how decisions are made and resources used.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "legislator",
+          "pos": "n.",
+          "definition": "A person who makes laws as a member of a legislative body.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "civil society",
+          "pos": "n.",
+          "definition": "The associations and organisations that operate independently of the state.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "bipartisan",
+          "pos": "adj.",
+          "definition": "Supported by two political parties that usually oppose each other.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "public opinion",
+          "pos": "n.",
+          "definition": "Views held by the general population on a particular issue.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "referendum turnout",
+          "pos": "n.",
+          "definition": "The percentage of eligible voters who actually vote in a referendum.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "sedentary lifestyle",
+          "pos": "n.",
+          "definition": "A way of living involving little physical activity.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "junk food",
+          "pos": "n.",
+          "definition": "Food that is high in calories but low in nutritional value.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "mental health",
+          "pos": "n.",
+          "definition": "A person's psychological well-being.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "well-being",
+          "pos": "n.",
+          "definition": "The state of being comfortable, healthy, or happy.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "immune system",
+          "pos": "n.",
+          "definition": "The body's defence against infection.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "life expectancy",
+          "pos": "n.",
+          "definition": "The average number of years a person is expected to live.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "public healthcare",
+          "pos": "n.",
+          "definition": "Health services funded and provided by the government.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "preventive care",
+          "pos": "n.",
+          "definition": "Healthcare aimed at preventing illness rather than treating it.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "fitness regime",
+          "pos": "n.",
+          "definition": "A regular and structured programme of physical exercise.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "chronic disease",
+          "pos": "n.",
+          "definition": "A long-lasting health condition.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "holistic",
+          "pos": "adj.",
+          "definition": "Treating the whole person rather than only symptoms.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "telemedicine",
+          "pos": "n.",
+          "definition": "Medical consultation conducted remotely using technology.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "screen-time fatigue",
+          "pos": "n.",
+          "definition": "Tiredness caused by prolonged use of digital screens.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "alternative medicine",
+          "pos": "n.",
+          "definition": "Treatments outside conventional medical practice.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "sleep deprivation",
+          "pos": "n.",
+          "definition": "The condition of not getting enough sleep.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "in addition",
+          "pos": "phr.",
+          "definition": "Used to add a related point.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "what is more",
+          "pos": "phr.",
+          "definition": "Used to add a striking or important point.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "owing to",
+          "pos": "phr.",
+          "definition": "Because of; introduces a cause.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "to sum up",
+          "pos": "phr.",
+          "definition": "In summary.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "of course",
+          "pos": "phr.",
+          "definition": "Used to acknowledge a point.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "granted",
+          "pos": "adv.",
+          "definition": "Used to admit a point.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "while it is true",
+          "pos": "phr.",
+          "definition": "Used to make a concession.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "firstly",
+          "pos": "adv.",
+          "definition": "Used to introduce the first point in a sequence.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "advertising campaign",
+          "pos": "n.",
+          "definition": "A coordinated series of advertisements built around a single theme or product.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "target audience",
+          "pos": "n.",
+          "definition": "The specific group of people a message or product is aimed at.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "consumer behaviour",
+          "pos": "n.",
+          "definition": "The patterns by which people choose and buy products and services.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "brand awareness",
+          "pos": "n.",
+          "definition": "The extent to which consumers recognise and recall a brand.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "influencer",
+          "pos": "n.",
+          "definition": "A person with a large social-media following whose opinions affect others' purchases.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "product placement",
+          "pos": "n.",
+          "definition": "Advertising in which products are featured within film, television, or video content.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "misinformation",
+          "pos": "n.",
+          "definition": "Incorrect or misleading information that is shared, often unintentionally.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "disinformation",
+          "pos": "n.",
+          "definition": "Deliberately misleading information spread to deceive an audience.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "press freedom",
+          "pos": "n.",
+          "definition": "The right of journalists to report news without government interference.",
+          "source": "web:ieltsfreetests_topics"
+        }
+      ]
+    },
+    {
+      "id": 101,
+      "title": "补充词汇 0701-0787",
+      "word_count": 87,
+      "source": "ielts_vocab_supplement",
+      "words": [
+        {
+          "word": "clickbait",
+          "pos": "n.",
+          "definition": "Online content with sensational headlines designed to attract clicks rather than inform.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "fake news",
+          "pos": "n.",
+          "definition": "False stories presented as legitimate news.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "subscriber",
+          "pos": "n.",
+          "definition": "A person who pays to receive a publication or service regularly.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "streaming",
+          "pos": "n.",
+          "definition": "The transmission of audio or video content over the internet in real time.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "paywall",
+          "pos": "n.",
+          "definition": "A system that requires users to pay before accessing online content.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "sensationalism",
+          "pos": "n.",
+          "definition": "The presentation of stories in a way that provokes interest or excitement, often at the expense of accuracy.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "audience engagement",
+          "pos": "n.",
+          "definition": "The extent to which an audience interacts with media content.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "consumerism",
+          "pos": "n.",
+          "definition": "A culture that encourages buying goods and services in large amounts.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "public service broadcaster",
+          "pos": "n.",
+          "definition": "A media organisation funded by the state to provide impartial content for citizens.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "viral",
+          "pos": "adj.",
+          "definition": "Spreading rapidly online from person to person.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "interest rate",
+          "pos": "n.",
+          "definition": "The percentage charged on borrowed money or paid on savings.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "economic growth",
+          "pos": "n.",
+          "definition": "An increase in the production of goods and services in an economy.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "disposable income",
+          "pos": "n.",
+          "definition": "The money a household has left after taxes and essential expenses.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "wealth gap",
+          "pos": "n.",
+          "definition": "The difference in assets and income between the richest and the poorest in a society.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "financial literacy",
+          "pos": "n.",
+          "definition": "The ability to understand and use financial information effectively.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "credit card",
+          "pos": "n.",
+          "definition": "A card allowing the holder to buy goods on credit and pay later.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "pension scheme",
+          "pos": "n.",
+          "definition": "A plan that provides income during retirement.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "exchange rate",
+          "pos": "n.",
+          "definition": "The value of one currency in terms of another.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "stock market",
+          "pos": "n.",
+          "definition": "The system in which company shares are bought and sold.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "fiscal policy",
+          "pos": "n.",
+          "definition": "Government decisions about taxation and spending.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "monetary policy",
+          "pos": "n.",
+          "definition": "Central-bank decisions about interest rates and the money supply.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "austerity",
+          "pos": "n.",
+          "definition": "A policy of reducing government spending to lower public debt.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "bailout",
+          "pos": "n.",
+          "definition": "Financial support given to a company or country in danger of failing.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "cost of living",
+          "pos": "n.",
+          "definition": "The amount of money needed for everyday expenses such as food and housing.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "minimum wage",
+          "pos": "n.",
+          "definition": "The lowest hourly pay an employer is legally required to give.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "consumer spending",
+          "pos": "n.",
+          "definition": "The total amount spent by households on goods and services.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "microfinance",
+          "pos": "n.",
+          "definition": "Small-scale financial services provided to people without access to traditional banking.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "bring up",
+          "pos": "phr.v.",
+          "definition": "To raise a child; to mention a topic.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "catch up",
+          "pos": "phr.v.",
+          "definition": "To reach the same level as others, or to chat about recent events.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "carry out",
+          "pos": "phr.v.",
+          "definition": "To perform or complete a task, especially a research-related one.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "go through",
+          "pos": "phr.v.",
+          "definition": "To experience something difficult; to read carefully.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "calm down",
+          "pos": "phr.v.",
+          "definition": "To become less excited, angry, or worried.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "cheer up",
+          "pos": "phr.v.",
+          "definition": "To become or make someone happier.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "fit in",
+          "pos": "phr.v.",
+          "definition": "To feel comfortable or accepted in a group.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "take in",
+          "pos": "phr.v.",
+          "definition": "To understand or absorb information; to deceive.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "come across",
+          "pos": "phr.v.",
+          "definition": "To meet or find by chance; to give a particular impression.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "grow up",
+          "pos": "phr.v.",
+          "definition": "To develop from a child into an adult.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "end up",
+          "pos": "phr.v.",
+          "definition": "To arrive at a final result or location, often unexpectedly.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "get into",
+          "pos": "phr.v.",
+          "definition": "To become interested in or gain admission to.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "hand in",
+          "pos": "phr.v.",
+          "definition": "To submit something, especially work.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "drop out",
+          "pos": "phr.v.",
+          "definition": "To leave a course or activity before finishing.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "come down with",
+          "pos": "phr.v.",
+          "definition": "To become ill with a particular sickness.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "get over",
+          "pos": "phr.v.",
+          "definition": "To recover from an illness or difficult experience.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "wind down",
+          "pos": "phr.v.",
+          "definition": "To relax after work or activity; to reduce activity gradually.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "look up to",
+          "pos": "phr.v.",
+          "definition": "To admire and respect someone.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "digital divide",
+          "pos": "n.",
+          "definition": "The gap between people with effective access to digital technology and those without.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "virtual reality",
+          "pos": "n.",
+          "definition": "A computer-generated three-dimensional environment users can interact with.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "screen time",
+          "pos": "n.",
+          "definition": "The amount of time spent looking at a phone, tablet, or computer screen.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "digital native",
+          "pos": "n.",
+          "definition": "A person who has grown up with digital technology since childhood.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "e-commerce",
+          "pos": "n.",
+          "definition": "The buying and selling of goods and services online.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "cloud computing",
+          "pos": "n.",
+          "definition": "Storing and accessing data over the internet rather than on a local computer.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "data privacy",
+          "pos": "n.",
+          "definition": "The right of individuals to control how their personal information is collected and used.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "hacker",
+          "pos": "n.",
+          "definition": "A person who illegally gains access to computer systems.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "cyberbullying",
+          "pos": "n.",
+          "definition": "The use of digital technology to threaten or harass others.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "tech-savvy",
+          "pos": "adj.",
+          "definition": "Knowledgeable about and comfortable with technology.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "user-friendly",
+          "pos": "adj.",
+          "definition": "Easy to use, especially by people without technical expertise.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "gadget",
+          "pos": "n.",
+          "definition": "A small mechanical or electronic device.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "telecommuting",
+          "pos": "n.",
+          "definition": "Working from home using digital tools to communicate with colleagues.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "smart device",
+          "pos": "n.",
+          "definition": "An electronic device that connects to other devices or networks.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "scalable",
+          "pos": "adj.",
+          "definition": "Able to grow easily without losing performance.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "off-the-beaten-track",
+          "pos": "adj.",
+          "definition": "Far from popular or busy areas.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "eco-tourism",
+          "pos": "n.",
+          "definition": "Tourism focused on natural environments and minimising harm to them.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "tourist trap",
+          "pos": "n.",
+          "definition": "A place exploiting tourists with overpriced or poor-quality offerings.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "backpacking",
+          "pos": "n.",
+          "definition": "Travelling cheaply with limited luggage.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "ancient ruins",
+          "pos": "n.",
+          "definition": "The remains of very old historical buildings.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "mass tourism",
+          "pos": "n.",
+          "definition": "Tourism on a very large scale.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "sustainable tourism",
+          "pos": "n.",
+          "definition": "Tourism that does not damage the environment or local communities.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "voluntourism",
+          "pos": "n.",
+          "definition": "Tourism combined with volunteer work.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "jet lag",
+          "pos": "n.",
+          "definition": "Tiredness caused by long-distance air travel across time zones.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "metropolis",
+          "pos": "n.",
+          "definition": "A very large, often capital city.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "host country",
+          "pos": "n.",
+          "definition": "A country that receives visitors, immigrants, or events.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "heritage site",
+          "pos": "n.",
+          "definition": "A place of significant cultural, historical, or natural value.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "budget travel",
+          "pos": "n.",
+          "definition": "Travel undertaken with limited spending.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "career path",
+          "pos": "n.",
+          "definition": "The sequence of jobs and roles a person follows over their working life.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "self-employed",
+          "pos": "adj.",
+          "definition": "Working for oneself rather than for an employer.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "work-life balance",
+          "pos": "n.",
+          "definition": "The amount of time spent on work compared with time spent on personal life.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "remote work",
+          "pos": "n.",
+          "definition": "Doing one's job from a location outside the employer's office, typically from home.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "gig economy",
+          "pos": "n.",
+          "definition": "A labour market dominated by short-term contracts and freelance work rather than permanent jobs.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "job security",
+          "pos": "n.",
+          "definition": "The likelihood that a person will keep their job long-term.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "vocational training",
+          "pos": "n.",
+          "definition": "Training that teaches the practical skills needed for a particular trade.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "unemployment rate",
+          "pos": "n.",
+          "definition": "The percentage of people in a country's workforce without paid work.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "white-collar",
+          "pos": "adj.",
+          "definition": "Relating to office-based or professional work.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "blue-collar",
+          "pos": "adj.",
+          "definition": "Relating to manual or industrial work.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "internship",
+          "pos": "n.",
+          "definition": "A period of work experience offered by an organisation, often to students.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "freelance",
+          "pos": "adj.",
+          "definition": "Working independently for several clients rather than for one employer.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "prospects",
+          "pos": "n.",
+          "definition": "The chances of future success or career progression.",
+          "source": "web:ieltsfreetests_topics"
+        },
+        {
+          "word": "workplace",
+          "pos": "n.",
+          "definition": "The location or environment where work is done.",
+          "source": "web:ieltsfreetests_topics"
+        }
+      ]
     }
   ],
-  "total_chapters": 93,
-  "total_words": 9248
+  "total_chapters": 101,
+  "total_words": 10035
 }

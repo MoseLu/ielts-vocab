@@ -19,7 +19,7 @@ const targetFiles = [
 const targetDirectories = [
   'docs/architecture',
   'docs/governance',
-  'docs/milestones',
+  'docs/milestone',
   'docs/operations',
   'docs/planning',
 ]
