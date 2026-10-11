@@ -2,71 +2,94 @@
 
 > Canonical document map for `products/ielts-vocab`. This file is the
 > single source of truth for "where do I read or update X?" inside the repo.
-> For cross-project relations, see `/Volumes/code/workspace/workspace.graph.json`.
+> For cross-project relations, see `/Volumes/code/workspace/workspace.graph.json`
+> or `workspace-project show ielts-vocab`.
 
-Last updated: 2026-10-11 (M18 doc-cleanup: root CHANGELOG/MILESTONE stubs removed in favor of `docs/state/` canonical; 18 stale ops/arch docs moved to `docs/milestone/2026-q2-{operations,architecture}-archive/`; `docs/logs/submit/` bulk-untracked under extended `.gitignore`)
+Last refreshed: 2026-10-11 (R3-B post-archive INDEX content rebuild.
+Prior M18 commit `0124e095` timestamp-only refreshed this file; this
+revision replaces the stale architecture/operations body with the
+post-archive inventory. Body line count is held under 250.)
 
 ## Root documents (read first)
 
 | File | Purpose | Owner | Update cadence |
 |---|---|---|---|
-| `README.md` | English project entrypoint, layout, run/verify commands | owner | when scope changes |
-| `README.zh-CN.md` | Simplified Chinese counterpart of `README.md` | owner | synced with README |
+| `README.md` / `README.zh-CN.md` | English / Chinese entrypoint, layout, run/verify commands | owner | when scope changes |
 | `AGENTS.md` | Root agent rules, boundaries, verification, doc read order | owner + control-plane | when rules change |
+| `INDEX.md` | This file | owner | when document map changes |
+| `docs/HANDOFF.md` | Current work, commands, contracts, troubleshooting, freshness | owner + control-plane | per Wave / per session |
 | `docs/state/CHANGELOG.md` | Keep-a-Changelog style release history | owner | every release |
 | `docs/state/TODO.md` | P0/P1/P2 task list with requirement IDs and test cases | owner + control-plane | weekly |
 | `docs/state/MILESTONE.md` | Evidence-backed milestone status snapshot | owner | per milestone close |
-| `docs/milestone/` | Long-form Wave history (Wave 1-6+); supplemental to `docs/state/MILESTONE.md` | owner | per Wave close |
 | `docs/state/PRD.md` | Product requirements, users, acceptance criteria, non-goals | owner | when scope changes |
 | `docs/state/TDD.md` | Test/technical design, architecture assumptions, verification commands | owner + test-engineer | when test strategy changes |
-| `INDEX.md` | This file | owner | when document map changes |
-| `docs/governance/SECURITY.md` | Private operator channel, secret-handling policy | owner | on policy change |
 | `docs/state/DEBUG.md` | Common debugging recipes (proxy, ASR, gateway, TTS) | owner | as needed |
 | `docs/state/TEST_REPORT.md` | Latest test run summary | control-plane | per CI run |
+| `docs/governance/SECURITY.md` | Private operator channel, secret-handling policy | owner | on policy change |
+
+## Active services (current inventory)
+
+Source of truth: `workspace-project show ielts-vocab`. Backing code under
+`services/<name>/` (split runtime) plus `backend/` (monolith compat) and
+`frontend/` (web client).
+
+| Service / capability | Owner | Backing path |
+|---|---|---|
+| `gateway-bff` | gateway | `backend/app.py`, `services/gateway-bff` |
+| `identity-service` | auth | `services/identity-service` |
+| `learning-core-service` | learning | `services/learning-core-service` |
+| `catalog-content-service` | content | `services/catalog-content-service` |
+| `ai-execution-service` | AI | `services/ai-execution-service` |
+| `tts-media-service` | media | `services/tts-media-service` |
+| `asr-service` (+ `realtime-asr-socket` on 5001) | speech | `services/asr-service`, `backend/services/asr_service.py` |
+| `notes-service` | notes | `services/notes-service` |
+| `admin-ops-service` | admin | `services/admin-ops-service` |
+| `ielts-learning-app` (web client) | frontend | `frontend/`, `apps/mobile/` |
+| `upload-asr-api` | speech | `backend/app.py` upload routes |
+| `mac-bridge` | mac-app | `apps/mac-bridge` (out-of-tree Vite/Express runtime) |
+
+Cross-project contracts consumed: `ai-capability`, `minimax-tokenplan`, `ollama-local` (all optional at runtime).
 
 ## Architecture (under `docs/architecture/`)
 
-- `Architecture.md` — top-level architecture overview
-- `backend-layered-architecture.md` — repository / service / route layers
-- `service-ownership-matrix.md` — service vs. table ownership
-- `gateway-service-contracts.md` — gateway to split service contracts
-- `domain-event-contracts.md` — outbox/inbox domain events
-- `frontend-boundaries.md` — Web / mobile / admin client boundaries
-- `multi-client-monorepo.md` — Web + mobile + admin client split
-- `audits/` — periodic audits (table boundary, strict contract, etc.)
-- `specs/realtime_waveform.md` (en mirror: `realtime_waveform.en.md`) — realtime waveform UI technical doc
+Live documents after M18 archive (2026-10-11). Eight older architecture
+specs now live under `docs/milestone/2026-q2-architecture-archive/`.
 
-## Governance (under `docs/governance/`)
+- `README.md` / `README.zh-CN.md` — folder convention + current specs list
+- `audits/architecture-audit.md` — periodic architecture audit
+- `audits/2026-06-07-gemma27b-code-review-frontend-nav-popover.md` — code-review record
+- `specs/realtime_waveform.md` (en: `realtime_waveform.en.md`) — realtime waveform UI technical doc
+- `specs/2026-03-28-tts-batch-generation-design.md` — TTS batch generation design
+- `specs/2026-04-09-shared-aliyun-oss-sdk.md` — shared Aliyun OSS SDK contract
+- `specs/2026-05-05-practice-mode-data-flow-roadmap.md` — practice / review / game / progress / mastery / session / stats / todo data-flow roadmap
+- `specs/templates/` — reusable architecture-spec templates
 
-- UI / product governance records
-- Authority, ownership, and contribution rules
-- Read first when changing UX, product surface, or contributor policy
-- `docs/governance/SECURITY.md` (en mirror: `docs/governance/SECURITY.zh-CN.md`) — security policy
-
-## Planning (under `docs/planning/`)
-
-- Roadmap and forward-looking plans
-- Should be read alongside `docs/state/MILESTONE.md` and `docs/state/TODO.md`
+Historical (read-only, do not edit): `docs/milestone/2026-q2-architecture-archive/` — `Architecture.md`, `backend-layered-architecture.md`, `service-ownership-matrix.md`, `gateway-service-contracts.md`, `domain-event-contracts.md`, `frontend-boundaries.md`, `multi-client-monorepo.md`, `service-table-boundary-audit.md`.
 
 ## Operations (under `docs/operations/`)
 
-- Local run, deployment, proxy chain, drill, and rollback recipes
-- Includes `nginx.conf.example` walkthrough and the production-like local proxy chain
+Live operator runbooks after M18 archive. Ten older operation docs now
+live under `docs/milestone/2026-q2-operations-archive/`.
 
-## Milestone (under `docs/milestone/`)
+- `README.md` / `README.zh-CN.md` — folder convention
+- `agent-browser-guide.md` — agent browser tooling for QA
+- `cloud-microservices-deployment.md` — cloud deployment runbook
+- `domain-routing.md` — domain and subdomain routing (incl. `ielts.axiomaticworld.com`)
+- `frontend-automation-setup.md` — local frontend automation setup
+- `local-page-load-performance-report-2026-05-01-1840.md` — perf snapshot
+- `local-ui-api-browser-test-report-2026-05-01.md` — UI/API browser test snapshot
+- `production-api-full-test-report-2026-04-30.md` — production API test snapshot
 
-- Per-milestone evidence, decisions, and drills
-- Currently archived under Wave 1-6 historical entries
+Historical (read-only, do not edit): `docs/milestone/2026-q2-operations-archive/` — `asr-http-socketio-contract.md`, `local-postgres-microservices.md`, `local-rabbitmq-microservices.md`, `local-redis-microservices.md`, `lowmem-consolidated-runtime.md`, `release-closeout-checklist.md`, `remote-production-baseline.md`, `ticket-driven-release-workflow.md`, `wave4-storage-parity-runbook.md`, `wave6c-cutover-validation.md`.
 
-## Logs / Submit (under `docs/logs/submit/`)
+## Governance, planning, milestone, logs
 
-- Submit-batch logs (created by `git-commit-batch` flow)
-- `2026xxxx-xxxxxx-*.md` are immutable once written
-
-## Project manifest (under `docs/`)
-
-- `project-docs.manifest.json` — project doc ownership manifest (status: partial)
-- `project-audit-2026-03-31.md` — last full project audit
+- `docs/governance/` — UI / product governance records, authority and ownership rules, `SECURITY.md`.
+- `docs/planning/` — forward-looking roadmap; read with `docs/state/MILESTONE.md` and `docs/state/TODO.md`.
+- `docs/milestone/` — per-milestone evidence, decisions, drills; current Wave 1-6 historical entries plus Q2 archives.
+- `docs/logs/submit/` — submit-batch logs from `git-commit-batch` (gitignored flat `.md` and dated subdirs).
+- `docs/project-docs.manifest.json` — project doc ownership manifest (status: partial).
+- `docs/project-audit-2026-03-31.md` — last full project audit.
 
 ## Frontend layout (`frontend/src/`)
 
@@ -79,6 +102,13 @@ Last updated: 2026-10-11 (M18 doc-cleanup: root CHANGELOG/MILESTONE stubs remove
 - `lib/` — schema, utilities, local sync
 - `styles/` — page styles
 - `tests/` — unit and integration tests
+
+Top runtime dependencies (from `frontend/package.json`): `react ^19.2.4`,
+`react-dom ^19.2.4`, `react-router-dom ^7.13.1`, `@tiptap/react ^3.24.0`,
+`socket.io-client ^4.8.3`. Top dev deps: `@types/react ^19.2.14`,
+`@playwright/test ^1.58.2`, `msw ^2.12.14`,
+`@testing-library/react ^16.3.2`,
+`@testing-library/user-event ^14.6.1`.
 
 ## Backend layout (`backend/`)
 
@@ -93,32 +123,54 @@ Last updated: 2026-10-11 (M18 doc-cleanup: root CHANGELOG/MILESTONE stubs remove
 
 ## Apps and packages
 
-- `apps/mobile` — Capacitor mobile shell (Android-first)
+- `apps/mobile` — Capacitor mobile shell (Android-first), Maestro E2E under `apps/mobile/scripts/`
 - `packages/app-core` — shared TypeScript / schema package
 - `packages/platform-sdk` — shared Python platform SDK (gateway, services, Redis, RabbitMQ, outbox, projections)
 
 ## Vocabulary data
 
 - `vocabulary_data/` — word books, chapter data, learning assets
-- `reference-materials/raw/` — IELTS PDFs and audio (git-ignored, kept locally)
+- `reference-materials/raw/` — IELTS PDFs and audio (gitignored, kept locally)
 
 ## Scripts and runtime
 
-- `scripts/` — guard scripts, repo utilities, commit-batch helpers
-- `services/` — split microservice startup helpers and shared env
+- `scripts/` — guard scripts, repo utilities, commit-batch helpers, cloud deploy (`scripts/cloud-deploy/`)
+- `services/` — split microservice startup helpers and shared env (`requirements.lock.txt`, `requirements.txt`)
 - `start-project.sh` / `start-microservices.sh` / `start-lowmem.sh` / `start-monolith-compat.sh` — local canonical runtimes
+
+## Build / verify commands
+
+From `package.json` (root) — narrowest meaningful set:
+
+- Dev runtime: `pnpm dev` (Mac local app) / `pnpm preview`
+- Frontend build: `pnpm build`
+- Lint: `pnpm lint` (frontend)
+- Frontend tests: `pnpm test` / `pnpm test:e2e` / `pnpm test:coverage`
+- Mobile: `pnpm mobile:android`, `pnpm mobile:test`, `pnpm mobile:typecheck`
+- Mobile E2E: `pnpm mobile:e2e:smoke` / `pnpm mobile:e2e:android`
+- Shared package: `pnpm app-core:test` / `pnpm app-core:typecheck`
+- Cross-client verify: `pnpm verify:clients`
+- Repo guards: `pnpm verify:repo-guards`
+- Doc discipline: `pnpm check:docs` / `pnpm check:file-lines` / `pnpm check:design-tokens` / `pnpm check:style-discipline`
+
+Index-level canonical verification (from `workspace-project show ielts-vocab`):
+
+- `pnpm --dir frontend verify:repo-guards`
+- `python -m pytest backend/tests/test_speech_transcribe.py backend/tests/test_speech_socketio.py`
 
 ## Source-of-truth resolution order
 
 1. `README.md` and `README.zh-CN.md` for entrypoint narrative.
 2. `docs/state/PRD.md` for product scope; `docs/state/TDD.md` for technical design and verification.
 3. `AGENTS.md` for agent rules and edit boundaries.
-4. `docs/state/MILESTONE.md` for current status; `docs/milestone/` for historical Wave detail.
+4. `docs/state/MILESTONE.md` for current status; `docs/milestone/` for historical Wave detail and Q2 archives.
 5. `docs/state/TODO.md` for active work; `docs/state/CHANGELOG.md` for shipped history.
-6. `docs/architecture/*` for deep design; `docs/operations/*` for run/ops; `docs/governance/*` for policy.
+6. `docs/architecture/*` for live design; `docs/operations/*` for live run/ops; `docs/governance/*` for policy.
+7. `docs/milestone/2026-q2-{architecture,operations}-archive/` for historical, read-only design and runbook material.
 
 ## Update discipline
 
 - Update `INDEX.md` whenever a new top-level document is added or its owner changes.
 - Update `project-docs.manifest.json` alongside `INDEX.md` so machine-readable consumers stay aligned.
 - Every material change in this index should be reflected in `docs/state/CHANGELOG.md` if the change is user-visible.
+- M18 doc-cleanup moved 10 operations + 8 architecture files into `docs/milestone/2026-q2-{operations,architecture}-archive/`; if a future change re-promotes any of them to live status, move the file back and refresh the corresponding body section here.
