@@ -4,7 +4,7 @@
 > single source of truth for "where do I read or update X?" inside the repo.
 > For cross-project relations, see `/Volumes/code/workspace/workspace.graph.json`.
 
-Last updated: 2026-06-08
+Last updated: 2026-10-11 (M18 doc-cleanup: root CHANGELOG/MILESTONE stubs removed in favor of `docs/state/` canonical; 18 stale ops/arch docs moved to `docs/milestone/2026-q2-{operations,architecture}-archive/`; `docs/logs/submit/` bulk-untracked under extended `.gitignore`)
 
 ## Root documents (read first)
 

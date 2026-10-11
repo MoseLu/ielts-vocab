@@ -96,4 +96,5 @@ vocabulary_data/vocabulary_examples.json
 reference-materials/raw/
 
 # Auto-generated submit logs (post-commit hook snapshots, not source)
-docs/logs/submit/*.md
+# Covers both flat .md files and dated subdir READMEs
+docs/logs/submit/
